@@ -24,7 +24,7 @@ interface StudentDao {
     fun search(query: String): Flow<List<Student>>
 
     @Query("SELECT * FROM students WHERE id = :studentId")
-    suspend fun getById(studentId: Long): Student?
+    fun readById(studentId: Long): Flow<Student>
 
     // Untuk tombol "Lihat Riwayat Lengkap"
     @Transaction

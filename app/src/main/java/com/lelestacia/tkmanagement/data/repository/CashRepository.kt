@@ -14,6 +14,7 @@ import com.lelestacia.tkmanagement.data.relation.StudentWithFees
 import com.lelestacia.tkmanagement.data.relation.StudentWithPayments
 import com.lelestacia.tkmanagement.data.relation.TunggakanItem
 import kotlinx.coroutines.flow.Flow
+import java.math.BigDecimal
 
 /**
  * Satu pintu masuk untuk semua akses data. ViewModel tidak menyentuh DAO
@@ -30,7 +31,7 @@ class CashRepository(
     // ---- Murid ----
     fun getActiveStudents(): Flow<List<Student>> = studentDao.getAllActive()
     fun searchStudents(query: String): Flow<List<Student>> = studentDao.search(query)
-    suspend fun getStudent(id: Long): Student? = studentDao.getById(id)
+    fun readStudentDataById(id: Long): Flow<Student> = studentDao.readById(id)
     suspend fun addStudent(student: Student): Long = studentDao.insert(student)
     suspend fun updateStudent(student: Student) = studentDao.update(student)
     suspend fun getStudentWithFees(id: Long): StudentWithFees? = studentDao.getWithFees(id)
@@ -38,19 +39,19 @@ class CashRepository(
 
     // ---- Tagihan ----
     fun getFeesForStudent(studentId: Long): Flow<List<StudentFee>> = feeDao.getFeesForStudent(studentId)
-    fun getFeeProgressForStudent(studentId: Long): Flow<List<FeeProgress>> =
+    fun readFeeProgressForStudentById(studentId: Long): Flow<List<FeeProgress>> =
         feeDao.getFeeProgressForStudent(studentId)
     suspend fun addFee(fee: StudentFee): Long = feeDao.insert(fee)
     fun getTunggakanList(): Flow<List<TunggakanItem>> = feeDao.getTunggakanList()
     suspend fun getFeeStatus(studentFeeId: Long): TunggakanItem? = feeDao.getFeeStatus(studentFeeId)
 
     // ---- Pemasukan ----
-    fun getPaymentsForStudent(studentId: Long): Flow<List<Payment>> = paymentDao.getPaymentsForStudent(studentId)
+    fun readPaymentsForStudentById(studentId: Long): Flow<List<Payment>> = paymentDao.getPaymentsForStudent(studentId)
     fun getPaymentsForFee(studentFeeId: Long): Flow<List<Payment>> = paymentDao.getPaymentsForFee(studentFeeId)
 
     /** Mencatat pembayaran; menolak jika nominal melebihi sisa tagihan. */
     suspend fun recordPayment(payment: Payment): Result<Long> {
-        if (payment.amount <= 0) return Result.failure(IllegalArgumentException("Nominal harus lebih dari 0"))
+        if (payment.amount <= BigDecimal.ZERO) return Result.failure(IllegalArgumentException("Nominal harus lebih dari 0"))
         if (payment.studentFeeId != null) {
             val status = feeDao.getFeeStatus(payment.studentFeeId)
             if (status != null && payment.amount > status.remaining) {
@@ -63,13 +64,13 @@ class CashRepository(
     // ---- Pengeluaran ----
     fun getAllExpenses(): Flow<List<Expense>> = expenseDao.getAll()
     suspend fun addExpense(expense: Expense): Result<Long> {
-        if (expense.amount <= 0) return Result.failure(IllegalArgumentException("Nominal harus lebih dari 0"))
+        if (expense.amount <= BigDecimal.ZERO) return Result.failure(IllegalArgumentException("Nominal harus lebih dari 0"))
         return Result.success(expenseDao.insert(expense))
     }
 
     // ---- Kas & Laporan ----
-    suspend fun getCurrentBalance(): Long = cashDao.getCurrentBalance()
-    suspend fun getTotalIncomeAllTime(): Long = paymentDao.getTotalIncomeAllTime()
-    suspend fun getTotalExpenseAllTime(): Long = expenseDao.getTotalExpenseAllTime()
-    suspend fun getNetCashBetween(start: Long, end: Long): Long = cashDao.getNetCashBetween(start, end)
+    suspend fun getCurrentBalance(): BigDecimal = cashDao.getCurrentBalance()
+    suspend fun getTotalIncomeAllTime(): BigDecimal = paymentDao.getTotalIncomeAllTime()
+    suspend fun getTotalExpenseAllTime(): BigDecimal = expenseDao.getTotalExpenseAllTime()
+    suspend fun getNetCashBetween(start: Long, end: Long): BigDecimal = cashDao.getNetCashBetween(start, end)
 }

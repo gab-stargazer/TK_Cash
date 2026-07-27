@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.math.BigDecimal
 
 data class AddFeeUiState(
     val studentId: Long = 0,
@@ -23,12 +24,16 @@ data class AddFeeUiState(
 )
 
 /** Menambahkan satu tagihan baru untuk seorang murid: SPP, seragam, buku, kegiatan, dll. */
-class AddFeeViewModel(private val repository: CashRepository) : ViewModel() {
+class AddFeeViewModel(
+    private val repository: CashRepository,
+    private val studentId: Long,
+    private val studentName: String
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AddFeeUiState())
     val uiState: StateFlow<AddFeeUiState> = _uiState.asStateFlow()
 
-    fun load(studentId: Long, studentName: String) {
+    init {
         val s = _uiState.value
         _uiState.value = s.copy(
             studentId = studentId,
@@ -65,12 +70,12 @@ class AddFeeViewModel(private val repository: CashRepository) : ViewModel() {
 
     fun save() {
         val s = _uiState.value
-        val amount = s.amountInput.toLongOrNull()
+        val amount = s.amountInput.toBigDecimalOrNull()
         if (s.label.isBlank()) {
             _uiState.value = s.copy(error = "Nama tagihan wajib diisi")
             return
         }
-        if (amount == null || amount <= 0) {
+        if (amount == null || amount <= BigDecimal.ZERO) {
             _uiState.value = s.copy(error = "Masukkan nominal yang valid")
             return
         }

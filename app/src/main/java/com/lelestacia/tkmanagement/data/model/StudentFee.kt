@@ -4,6 +4,9 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import java.math.BigDecimal
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 /**
  * Satu tagihan untuk seorang murid, misalnya:
@@ -14,6 +17,7 @@ import androidx.room.PrimaryKey
  * Payment (pemasukan) di-link ke StudentFee ini agar cicilan & pelunasan
  * bisa dihitung: sisaTagihan = totalAmount - SUM(payments.amount)
  */
+@OptIn(ExperimentalTime::class)
 @Entity(
     tableName = "student_fees",
     foreignKeys = [
@@ -29,11 +33,11 @@ import androidx.room.PrimaryKey
 data class StudentFee(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
-
     val studentId: Long,
     val feeType: FeeType,
-    val label: String,                  // contoh: "SPP Juli 2026"
-    val totalAmount: Long,              // nominal tagihan, dalam Rupiah (Long, hindari Double)
+    val label: String,
+    val totalAmount: BigDecimal,
     val dueDate: Long? = null,
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = Clock.System.now().toEpochMilliseconds(),
+    val updatedAt: Long? = null
 )

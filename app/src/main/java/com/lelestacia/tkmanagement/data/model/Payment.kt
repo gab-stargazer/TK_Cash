@@ -4,6 +4,9 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import java.math.BigDecimal
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 /**
  * Satu transaksi pemasukan (bendahara menerima uang dari wali murid).
@@ -27,15 +30,16 @@ import androidx.room.PrimaryKey
     ],
     indices = [Index("studentId"), Index("studentFeeId")]
 )
+@OptIn(ExperimentalTime::class)
 data class Payment(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
-
     val studentId: Long,
-    val studentFeeId: Long?,     // tagihan mana yang dibayar; null jika pemasukan umum
-    val amount: Long,             // nominal dibayar hari ini
-    val paymentDate: Long = System.currentTimeMillis(),
+    val studentFeeId: Long?,
+    val amount: BigDecimal,
+    val paymentDate: Long = Clock.System.now().toEpochMilliseconds(),
     val note: String? = null,
-    val receiptNumber: String? = null,  // untuk cetak kuitansi
-    val createdAt: Long = System.currentTimeMillis()
+    val receiptNumber: String? = null,
+    val createdAt: Long = Clock.System.now().toEpochMilliseconds(),
+    val updatedAt: Long? = null
 )

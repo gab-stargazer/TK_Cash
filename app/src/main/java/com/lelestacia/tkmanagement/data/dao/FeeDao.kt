@@ -28,9 +28,9 @@ interface FeeDao {
             sf.studentId AS studentId,
             sf.feeType AS feeType,
             sf.label AS label,
-            sf.totalAmount AS totalAmount,
-            COALESCE(SUM(p.amount), 0) AS paidAmount,
-            sf.totalAmount - COALESCE(SUM(p.amount), 0) AS remaining
+            CAST(sf.totalAmount AS TEXT) AS totalAmount,
+            CAST(COALESCE(SUM(p.amount), '0') AS TEXT) AS paidAmount,
+            CAST(sf.totalAmount - COALESCE(SUM(p.amount), 0) AS TEXT) AS remaining
         FROM student_fees sf
         LEFT JOIN payments p ON p.studentFeeId = sf.id
         WHERE sf.studentId = :studentId
@@ -51,9 +51,9 @@ interface FeeDao {
             sf.studentId AS studentId,
             s.name AS studentName,
             sf.label AS feeLabel,
-            sf.totalAmount AS totalAmount,
-            COALESCE(SUM(p.amount), 0) AS paidAmount,
-            sf.totalAmount - COALESCE(SUM(p.amount), 0) AS remaining
+            CAST(sf.totalAmount AS TEXT) AS totalAmount,
+            CAST(COALESCE(SUM(p.amount), '0') AS TEXT) AS paidAmount,
+            CAST(sf.totalAmount - COALESCE(SUM(p.amount), 0) AS TEXT) AS remaining
         FROM student_fees sf
         INNER JOIN students s ON s.id = sf.studentId
         LEFT JOIN payments p ON p.studentFeeId = sf.id
@@ -72,9 +72,9 @@ interface FeeDao {
             sf.studentId AS studentId,
             s.name AS studentName,
             sf.label AS feeLabel,
-            sf.totalAmount AS totalAmount,
-            COALESCE(SUM(p.amount), 0) AS paidAmount,
-            sf.totalAmount - COALESCE(SUM(p.amount), 0) AS remaining
+            CAST(sf.totalAmount AS TEXT) AS totalAmount,
+            CAST(COALESCE(SUM(p.amount), '0') AS TEXT) AS paidAmount,
+            CAST(sf.totalAmount - COALESCE(SUM(p.amount), 0) AS TEXT) AS remaining
         FROM student_fees sf
         INNER JOIN students s ON s.id = sf.studentId
         LEFT JOIN payments p ON p.studentFeeId = sf.id

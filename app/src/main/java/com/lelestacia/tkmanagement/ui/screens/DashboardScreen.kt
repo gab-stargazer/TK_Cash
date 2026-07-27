@@ -34,6 +34,7 @@ import com.lelestacia.tkmanagement.ui.theme.InkPaper
 import com.lelestacia.tkmanagement.ui.theme.MoneyIn
 import com.lelestacia.tkmanagement.ui.theme.MoneyOut
 import com.lelestacia.tkmanagement.viewmodel.DashboardViewModel
+import java.math.BigDecimal
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -176,7 +177,7 @@ fun DashboardScreen(
 }
 
 @Composable
-private fun SummaryCard(title: String, amount: Long, color: androidx.compose.ui.graphics.Color, modifier: Modifier) {
+private fun SummaryCard(title: String, amount: BigDecimal, color: androidx.compose.ui.graphics.Color, modifier: Modifier) {
     Card(
         shape = RoundedCornerShape(12.dp),
         modifier = modifier

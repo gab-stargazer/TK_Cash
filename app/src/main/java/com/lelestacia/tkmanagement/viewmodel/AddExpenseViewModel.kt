@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.math.BigDecimal
 
 data class AddExpenseUiState(
     val category: ExpenseCategory = ExpenseCategory.ATK,
@@ -38,8 +39,8 @@ class AddExpenseViewModel(private val repository: CashRepository) : ViewModel() 
 
     fun save() {
         val s = _uiState.value
-        val amount = s.amountInput.toLongOrNull()
-        if (amount == null || amount <= 0) {
+        val amount = s.amountInput.toBigDecimalOrNull()
+        if (amount == null || amount <= BigDecimal.ZERO) {
             _uiState.value = s.copy(error = "Masukkan nominal yang valid")
             return
         }

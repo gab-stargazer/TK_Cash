@@ -10,27 +10,28 @@ import com.lelestacia.tkmanagement.ui.theme.MoneyIn
 import com.lelestacia.tkmanagement.ui.theme.MoneyOut
 import com.lelestacia.tkmanagement.ui.theme.MoneyTextStyle
 import com.lelestacia.tkmanagement.ui.theme.MoneyTextStyleSmall
+import java.math.BigDecimal
 import java.text.NumberFormat
 import java.util.Locale
 
 private val idFormat = NumberFormat.getNumberInstance(Locale("in", "ID"))
 
 /** "1500000" -> "Rp1.500.000" */
-fun formatRupiah(amount: Long): String = "Rp${idFormat.format(amount)}"
+fun formatRupiah(amount: BigDecimal): String = "Rp${idFormat.format(amount)}"
 
 @Composable
 fun MoneyText(
-    amount: Long,
+    amount: BigDecimal,
     modifier: Modifier = Modifier,
     small: Boolean = false,
     color: Color? = null,
     signed: Boolean = false
 ) {
-    val prefix = if (signed && amount > 0) "+" else ""
+    val prefix = if (signed && amount > BigDecimal.ZERO) "+" else ""
     Text(
         text = "$prefix${formatRupiah(amount)}",
         style = if (small) MoneyTextStyleSmall else MoneyTextStyle,
-        color = color ?: (if (signed) (if (amount >= 0) MoneyIn else MoneyOut) else Color.Unspecified),
+        color = color ?: (if (signed) (if (amount >= BigDecimal.ZERO) MoneyIn else MoneyOut) else Color.Unspecified),
         modifier = modifier.padding(vertical = 0.dp)
     )
 }

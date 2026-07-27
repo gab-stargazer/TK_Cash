@@ -6,6 +6,7 @@ import androidx.room.Query
 import com.lelestacia.tkmanagement.data.model.Expense
 import com.lelestacia.tkmanagement.data.model.ExpenseCategory
 import kotlinx.coroutines.flow.Flow
+import java.math.BigDecimal
 
 @Dao
 interface ExpenseDao {
@@ -18,9 +19,9 @@ interface ExpenseDao {
     @Query("SELECT * FROM expenses WHERE category = :category ORDER BY expenseDate DESC")
     fun getByCategory(category: ExpenseCategory): Flow<List<Expense>>
 
-    @Query("SELECT COALESCE(SUM(amount), 0) FROM expenses WHERE expenseDate BETWEEN :start AND :end")
-    suspend fun getTotalExpenseBetween(start: Long, end: Long): Long
+    @Query("SELECT CAST(COALESCE(SUM(amount), '0') AS TEXT) FROM expenses WHERE expenseDate BETWEEN :start AND :end")
+    suspend fun getTotalExpenseBetween(start: Long, end: Long): BigDecimal
 
-    @Query("SELECT COALESCE(SUM(amount), 0) FROM expenses")
-    suspend fun getTotalExpenseAllTime(): Long
+    @Query("SELECT CAST(COALESCE(SUM(amount), '0') AS TEXT) FROM expenses")
+    suspend fun getTotalExpenseAllTime(): BigDecimal
 }
