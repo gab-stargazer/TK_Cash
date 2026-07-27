@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.lelestacia.tkmanagement.ui.theme.MoneyOut
+import com.lelestacia.tkmanagement.viewmodel.AddStudentUiEvent
 import com.lelestacia.tkmanagement.viewmodel.AddStudentViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -32,7 +33,7 @@ fun AddStudentScreen(
     onSaved: () -> Unit,
     onBack: () -> Unit
 ) {
-    val state by viewModel.formState.collectAsState()
+    val state by viewModel.uiState.collectAsState()
 
     LaunchedEffect(state.saved) { if (state.saved) onSaved() }
 
@@ -49,28 +50,28 @@ fun AddStudentScreen(
         ) {
             OutlinedTextField(
                 value = state.name,
-                onValueChange = { v -> viewModel.update { it.copy(name = v) } },
+                onValueChange = { viewModel.onEvent(AddStudentUiEvent.UpdateName(it)) },
                 label = { Text("Nama murid") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
             OutlinedTextField(
                 value = state.nis,
-                onValueChange = { v -> viewModel.update { it.copy(nis = v) } },
+                onValueChange = { viewModel.onEvent(AddStudentUiEvent.UpdateNis(it)) },
                 label = { Text("Nomor induk siswa (opsional)") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
             OutlinedTextField(
                 value = state.guardianName,
-                onValueChange = { v -> viewModel.update { it.copy(guardianName = v) } },
+                onValueChange = { viewModel.onEvent(AddStudentUiEvent.UpdateGuardianName(it)) },
                 label = { Text("Nama wali") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
             OutlinedTextField(
                 value = state.whatsappNumber,
-                onValueChange = { v -> viewModel.update { it.copy(whatsappNumber = v) } },
+                onValueChange = { viewModel.onEvent(AddStudentUiEvent.UpdateWhatsappNumber(it)) },
                 label = { Text("Nomor WhatsApp wali") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
@@ -80,21 +81,21 @@ fun AddStudentScreen(
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = state.uniformShirtSize,
-                    onValueChange = { v -> viewModel.update { it.copy(uniformShirtSize = v) } },
+                    onValueChange = { viewModel.onEvent(AddStudentUiEvent.UpdateUniformShirtSize(it)) },
                     label = { Text("Baju") },
                     singleLine = true,
                     modifier = Modifier.weight(1f)
                 )
                 OutlinedTextField(
                     value = state.uniformPantsOrSkirtSize,
-                    onValueChange = { v -> viewModel.update { it.copy(uniformPantsOrSkirtSize = v) } },
+                    onValueChange = { viewModel.onEvent(AddStudentUiEvent.UpdateUniformPantsOrSkirtSize(it)) },
                     label = { Text("Celana/Rok") },
                     singleLine = true,
                     modifier = Modifier.weight(1f)
                 )
                 OutlinedTextField(
                     value = state.uniformShoeSize,
-                    onValueChange = { v -> viewModel.update { it.copy(uniformShoeSize = v) } },
+                    onValueChange = { viewModel.onEvent(AddStudentUiEvent.UpdateUniformShoeSize(it)) },
                     label = { Text("Sepatu") },
                     singleLine = true,
                     modifier = Modifier.weight(1f)
@@ -106,7 +107,7 @@ fun AddStudentScreen(
             }
 
             Button(
-                onClick = viewModel::save,
+                onClick = { viewModel.onEvent(AddStudentUiEvent.Save) },
                 enabled = !state.isSaving,
                 modifier = Modifier.fillMaxWidth()
             ) {

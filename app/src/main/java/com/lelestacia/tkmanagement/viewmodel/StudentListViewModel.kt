@@ -3,20 +3,26 @@ package com.lelestacia.tkmanagement.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lelestacia.tkmanagement.data.model.Student
-import com.lelestacia.tkmanagement.data.repository.CashRepository
+import com.lelestacia.tkmanagement.data.repository.StudentRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 
-class StudentListViewModel(repository: CashRepository) : ViewModel() {
+sealed interface StudentListUiEvent {
+    data class QueryChange(val query: String) : StudentListUiEvent
+}
+
+class StudentListViewModel(private val repository: StudentRepository) : ViewModel() {
 
     private val query = MutableStateFlow("")
     val currentQuery: StateFlow<String> = query
 
-    fun onQueryChange(value: String) {
-        query.value = value
+    fun onEvent(event: StudentListUiEvent) {
+        when (event) {
+            is StudentListUiEvent.QueryChange -> query.value = event.query
+        }
     }
 
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)

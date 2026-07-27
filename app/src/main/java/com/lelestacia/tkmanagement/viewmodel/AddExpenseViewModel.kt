@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lelestacia.tkmanagement.data.model.Expense
 import com.lelestacia.tkmanagement.data.model.ExpenseCategory
-import com.lelestacia.tkmanagement.data.repository.CashRepository
+import com.lelestacia.tkmanagement.data.repository.FinanceRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,24 +20,40 @@ data class AddExpenseUiState(
     val saved: Boolean = false
 )
 
-class AddExpenseViewModel(private val repository: CashRepository) : ViewModel() {
+sealed interface AddExpenseUiEvent {
+    data class CategoryChange(val category: ExpenseCategory) : AddExpenseUiEvent
+    data class AmountChange(val value: String) : AddExpenseUiEvent
+    data class NoteChange(val value: String) : AddExpenseUiEvent
+    object Save : AddExpenseUiEvent
+}
+
+class AddExpenseViewModel(private val repository: FinanceRepository) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AddExpenseUiState())
     val uiState: StateFlow<AddExpenseUiState> = _uiState.asStateFlow()
 
-    fun onCategoryChange(category: ExpenseCategory) {
+    fun onEvent(event: AddExpenseUiEvent) {
+        when (event) {
+            is AddExpenseUiEvent.CategoryChange -> onCategoryChange(event.category)
+            is AddExpenseUiEvent.AmountChange -> onAmountChange(event.value)
+            is AddExpenseUiEvent.NoteChange -> onNoteChange(event.value)
+            AddExpenseUiEvent.Save -> save()
+        }
+    }
+
+    private fun onCategoryChange(category: ExpenseCategory) {
         _uiState.value = _uiState.value.copy(category = category, error = null)
     }
 
-    fun onAmountChange(value: String) {
+    private fun onAmountChange(value: String) {
         _uiState.value = _uiState.value.copy(amountInput = value.filter { it.isDigit() }, error = null)
     }
 
-    fun onNoteChange(value: String) {
+    private fun onNoteChange(value: String) {
         _uiState.value = _uiState.value.copy(note = value)
     }
 
-    fun save() {
+    private fun save() {
         val s = _uiState.value
         val amount = s.amountInput.toBigDecimalOrNull()
         if (amount == null || amount <= BigDecimal.ZERO) {
@@ -51,7 +67,7 @@ class AddExpenseViewModel(private val repository: CashRepository) : ViewModel() 
                 Expense(category = s.category, amount = amount, note = s.note.ifBlank { null })
             )
             result.fold(
-                onSuccess = { _uiState.value = AddExpenseUiState(saved = true) },
+                onSuccess = { _uiState.value = _uiState.value.copy(saved = true, isSaving = false) },
                 onFailure = { e -> _uiState.value = s.copy(isSaving = false, error = e.message) }
             )
         }

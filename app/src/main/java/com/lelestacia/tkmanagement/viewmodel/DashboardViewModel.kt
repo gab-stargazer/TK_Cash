@@ -3,7 +3,8 @@ package com.lelestacia.tkmanagement.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lelestacia.tkmanagement.data.relation.TunggakanItem
-import com.lelestacia.tkmanagement.data.repository.CashRepository
+import com.lelestacia.tkmanagement.data.repository.FeeRepository
+import com.lelestacia.tkmanagement.data.repository.FinanceRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,22 +20,34 @@ data class DashboardUiState(
     val topTunggakan: List<TunggakanItem> = emptyList()
 )
 
-class DashboardViewModel(private val repository: CashRepository) : ViewModel() {
+sealed interface DashboardUiEvent {
+    object Refresh : DashboardUiEvent
+}
+
+class DashboardViewModel(
+    private val financeRepository: FinanceRepository,
+    private val feeRepository: FeeRepository
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DashboardUiState())
     val uiState: StateFlow<DashboardUiState> = _uiState.asStateFlow()
 
     init {
-        refresh()
+        onEvent(DashboardUiEvent.Refresh)
         observeTunggakan()
     }
 
-    /** Panggil ulang setiap kembali ke Dashboard (mis. setelah input transaksi). */
-    fun refresh() {
+    fun onEvent(event: DashboardUiEvent) {
+        when (event) {
+            DashboardUiEvent.Refresh -> refresh()
+        }
+    }
+
+    private fun refresh() {
         viewModelScope.launch {
-            val saldo = repository.getCurrentBalance()
-            val income = repository.getTotalIncomeAllTime()
-            val expense = repository.getTotalExpenseAllTime()
+            val saldo = financeRepository.getCurrentBalance()
+            val income = financeRepository.getTotalIncomeAllTime()
+            val expense = financeRepository.getTotalExpenseAllTime()
             _uiState.value = _uiState.value.copy(
                 isLoading = false,
                 saldoKas = saldo,
@@ -46,7 +59,7 @@ class DashboardViewModel(private val repository: CashRepository) : ViewModel() {
 
     private fun observeTunggakan() {
         viewModelScope.launch {
-            repository.getTunggakanList().collectLatest { list ->
+            feeRepository.getTunggakanList().collectLatest { list ->
                 _uiState.value = _uiState.value.copy(topTunggakan = list.take(5))
             }
         }

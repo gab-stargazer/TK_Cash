@@ -1,7 +1,7 @@
 package com.lelestacia.tkmanagement.di
 
 import com.lelestacia.tkmanagement.data.AppDatabase
-import com.lelestacia.tkmanagement.data.repository.CashRepository
+import com.lelestacia.tkmanagement.data.repository.*
 import com.lelestacia.tkmanagement.ui.navigation.Destination
 import com.lelestacia.tkmanagement.ui.navigation.Navigator
 import com.lelestacia.tkmanagement.ui.screens.*
@@ -26,8 +26,10 @@ val appModule = module {
     single { get<AppDatabase>().expenseDao() }
     single { get<AppDatabase>().cashDao() }
 
-    // Repository
-    single { CashRepository(get(), get(), get(), get(), get()) }
+    // Repositories
+    single<StudentRepository> { StudentRepositoryImpl(get()) }
+    single<FeeRepository> { FeeRepositoryImpl(get()) }
+    single<FinanceRepository> { FinanceRepositoryImpl(get(), get(), get(), get()) }
 
     // Navigator
     activityRetainedScope {
@@ -113,10 +115,10 @@ val appModule = module {
     // ViewModels
     viewModelOf(::DashboardViewModel)
     viewModelOf(::StudentListViewModel)
-    viewModel { params -> StudentDetailViewModel(get(), params.get()) }
+    viewModel { params -> StudentDetailViewModel(get(), get(), get(), params.get()) }
     viewModelOf(::AddStudentViewModel)
     viewModel { params ->
-        AddPaymentViewModel(get(), params.get(), params.get(), params.getOrNull())
+        AddPaymentViewModel(get(), get(), params.get(), params.get(), params.getOrNull())
     }
     viewModel { params ->
         AddFeeViewModel(get(), params.get(), params.get())

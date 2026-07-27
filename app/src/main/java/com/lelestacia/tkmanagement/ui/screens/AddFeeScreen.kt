@@ -24,6 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.lelestacia.tkmanagement.data.model.FeeType
 import com.lelestacia.tkmanagement.ui.theme.MoneyOut
+import com.lelestacia.tkmanagement.viewmodel.AddFeeUiEvent
 import com.lelestacia.tkmanagement.viewmodel.AddFeeViewModel
 
 private fun feeTypeLabel(type: FeeType) = when (type) {
@@ -59,7 +60,7 @@ fun AddFeeScreen(
                 FeeType.values().forEach { type ->
                     FilterChip(
                         selected = state.feeType == type,
-                        onClick = { viewModel.onFeeTypeChange(type) },
+                        onClick = { viewModel.onEvent(AddFeeUiEvent.TypeChange(type)) },
                         label = { Text(feeTypeLabel(type)) }
                     )
                 }
@@ -67,7 +68,7 @@ fun AddFeeScreen(
 
             OutlinedTextField(
                 value = state.label,
-                onValueChange = viewModel::onLabelChange,
+                onValueChange = { viewModel.onEvent(AddFeeUiEvent.LabelChange(it)) },
                 label = { Text("Nama tagihan") },
                 placeholder = { Text("mis. Seragam Olahraga, SPP Agustus 2026") },
                 singleLine = true,
@@ -76,7 +77,7 @@ fun AddFeeScreen(
 
             OutlinedTextField(
                 value = state.amountInput,
-                onValueChange = viewModel::onAmountChange,
+                onValueChange = { viewModel.onEvent(AddFeeUiEvent.AmountChange(it)) },
                 label = { Text("Total tagihan (Rp)") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
@@ -87,7 +88,7 @@ fun AddFeeScreen(
             }
 
             Button(
-                onClick = viewModel::save,
+                onClick = { viewModel.onEvent(AddFeeUiEvent.Save) },
                 enabled = !state.isSaving,
                 modifier = Modifier.fillMaxWidth()
             ) {

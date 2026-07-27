@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lelestacia.tkmanagement.data.model.FeeType
 import com.lelestacia.tkmanagement.data.model.StudentFee
-import com.lelestacia.tkmanagement.data.repository.CashRepository
+import com.lelestacia.tkmanagement.data.repository.FeeRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,9 +23,16 @@ data class AddFeeUiState(
     val saved: Boolean = false
 )
 
+sealed interface AddFeeUiEvent {
+    data class TypeChange(val type: FeeType) : AddFeeUiEvent
+    data class LabelChange(val value: String) : AddFeeUiEvent
+    data class AmountChange(val value: String) : AddFeeUiEvent
+    object Save : AddFeeUiEvent
+}
+
 /** Menambahkan satu tagihan baru untuk seorang murid: SPP, seragam, buku, kegiatan, dll. */
 class AddFeeViewModel(
-    private val repository: CashRepository,
+    private val repository: FeeRepository,
     private val studentId: Long,
     private val studentName: String
 ) : ViewModel() {
@@ -42,6 +49,15 @@ class AddFeeViewModel(
         )
     }
 
+    fun onEvent(event: AddFeeUiEvent) {
+        when (event) {
+            is AddFeeUiEvent.TypeChange -> onFeeTypeChange(event.type)
+            is AddFeeUiEvent.LabelChange -> onLabelChange(event.value)
+            is AddFeeUiEvent.AmountChange -> onAmountChange(event.value)
+            AddFeeUiEvent.Save -> save()
+        }
+    }
+
     private fun defaultLabelFor(type: FeeType) = when (type) {
         FeeType.PENDAFTARAN -> "Pendaftaran"
         FeeType.SPP -> "SPP"
@@ -51,7 +67,7 @@ class AddFeeViewModel(
         FeeType.LAINNYA -> ""
     }
 
-    fun onFeeTypeChange(type: FeeType) {
+    private fun onFeeTypeChange(type: FeeType) {
         val s = _uiState.value
         _uiState.value = s.copy(
             feeType = type,
@@ -60,15 +76,15 @@ class AddFeeViewModel(
         )
     }
 
-    fun onLabelChange(value: String) {
+    private fun onLabelChange(value: String) {
         _uiState.value = _uiState.value.copy(label = value, labelManuallyEdited = true, error = null)
     }
 
-    fun onAmountChange(value: String) {
+    private fun onAmountChange(value: String) {
         _uiState.value = _uiState.value.copy(amountInput = value.filter { it.isDigit() }, error = null)
     }
 
-    fun save() {
+    private fun save() {
         val s = _uiState.value
         val amount = s.amountInput.toBigDecimalOrNull()
         if (s.label.isBlank()) {
@@ -90,7 +106,7 @@ class AddFeeViewModel(
                     totalAmount = amount
                 )
             )
-            _uiState.value = AddFeeUiState(saved = true)
+            _uiState.value = _uiState.value.copy(saved = true, isSaving = false)
         }
     }
 }

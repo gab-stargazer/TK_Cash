@@ -33,6 +33,7 @@ import com.lelestacia.tkmanagement.ui.components.MoneyText
 import com.lelestacia.tkmanagement.ui.theme.InkPaper
 import com.lelestacia.tkmanagement.ui.theme.MoneyIn
 import com.lelestacia.tkmanagement.ui.theme.MoneyOut
+import com.lelestacia.tkmanagement.viewmodel.DashboardUiEvent
 import com.lelestacia.tkmanagement.viewmodel.DashboardViewModel
 import java.math.BigDecimal
 
@@ -47,7 +48,7 @@ fun DashboardScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
 
-    LaunchedEffect(Unit) { viewModel.refresh() }
+    LaunchedEffect(Unit) { viewModel.onEvent(DashboardUiEvent.Refresh) }
 
     Scaffold(
         containerColor = InkPaper,

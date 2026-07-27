@@ -25,7 +25,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -35,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import com.lelestacia.tkmanagement.ui.components.LunasChip
 import com.lelestacia.tkmanagement.ui.components.MoneyText
 import com.lelestacia.tkmanagement.ui.components.TunggakanChip
+import com.lelestacia.tkmanagement.viewmodel.StudentDetailUiEvent
 import com.lelestacia.tkmanagement.viewmodel.StudentDetailViewModel
 import java.math.BigDecimal
 
@@ -281,7 +281,7 @@ fun StudentDetailScreen(
                 }
             }
 
-            val paymentsToShow = state.payments
+            val paymentsToShow = if (state.showFullHistory) state.payments else state.payments.take(3)
             items(paymentsToShow) { payment ->
                 Row(
                     Modifier
@@ -299,7 +299,7 @@ fun StudentDetailScreen(
             if (!state.showFullHistory && state.payments.size > 3) {
                 item {
                     OutlinedButton(
-                        onClick = viewModel::toggleFullHistory,
+                        onClick = { viewModel.onEvent(StudentDetailUiEvent.ToggleHistory) },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text("Lihat Riwayat Lengkap (${state.payments.size})")

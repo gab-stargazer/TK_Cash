@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.lelestacia.tkmanagement.ui.components.MoneyText
 import com.lelestacia.tkmanagement.ui.theme.MoneyOut
+import com.lelestacia.tkmanagement.viewmodel.AddPaymentUiEvent
 import com.lelestacia.tkmanagement.viewmodel.AddPaymentViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -64,7 +65,7 @@ fun AddPaymentScreen(
                 ) {
                     state.availableFees.forEach { fee ->
                         AssistChip(
-                            onClick = { viewModel.selectFee(fee.id) },
+                            onClick = { viewModel.onEvent(AddPaymentUiEvent.SelectFee(fee.id)) },
                             label = { Text(fee.label) }
                         )
                     }
@@ -78,14 +79,14 @@ fun AddPaymentScreen(
 
             OutlinedTextField(
                 value = state.amountInput,
-                onValueChange = viewModel::onAmountChange,
+                onValueChange = { viewModel.onEvent(AddPaymentUiEvent.AmountChange(it)) },
                 label = { Text("Nominal dibayar hari ini (Rp)") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
             OutlinedTextField(
                 value = state.note,
-                onValueChange = viewModel::onNoteChange,
+                onValueChange = { viewModel.onEvent(AddPaymentUiEvent.NoteChange(it)) },
                 label = { Text("Catatan (opsional)") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
@@ -96,7 +97,7 @@ fun AddPaymentScreen(
             }
 
             Button(
-                onClick = viewModel::save,
+                onClick = { viewModel.onEvent(AddPaymentUiEvent.Save) },
                 enabled = !state.isSaving,
                 modifier = Modifier.fillMaxWidth()
             ) {

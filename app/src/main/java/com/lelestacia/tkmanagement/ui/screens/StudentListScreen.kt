@@ -28,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.lelestacia.tkmanagement.data.model.Student
+import com.lelestacia.tkmanagement.viewmodel.StudentListUiEvent
 import com.lelestacia.tkmanagement.viewmodel.StudentListViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -49,7 +50,7 @@ fun StudentListScreen(
         Column(Modifier.fillMaxSize().padding(padding)) {
             OutlinedTextField(
                 value = query,
-                onValueChange = viewModel::onQueryChange,
+                onValueChange = { viewModel.onEvent(StudentListUiEvent.QueryChange(it)) },
                 label = { Text("Cari nama murid") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth().padding(16.dp)

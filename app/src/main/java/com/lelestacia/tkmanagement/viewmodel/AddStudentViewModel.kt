@@ -4,13 +4,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lelestacia.tkmanagement.data.model.Student
 import com.lelestacia.tkmanagement.data.model.UniformStatus
-import com.lelestacia.tkmanagement.data.repository.CashRepository
+import com.lelestacia.tkmanagement.data.repository.StudentRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-data class AddStudentFormState(
+data class AddStudentUiState(
     val nis: String = "",
     val name: String = "",
     val guardianName: String = "",
@@ -23,27 +23,47 @@ data class AddStudentFormState(
     val isSaving: Boolean = false
 )
 
-class AddStudentViewModel(private val repository: CashRepository) : ViewModel() {
+sealed interface AddStudentUiEvent {
+    data class UpdateNis(val value: String) : AddStudentUiEvent
+    data class UpdateName(val value: String) : AddStudentUiEvent
+    data class UpdateGuardianName(val value: String) : AddStudentUiEvent
+    data class UpdateWhatsappNumber(val value: String) : AddStudentUiEvent
+    data class UpdateUniformShirtSize(val value: String) : AddStudentUiEvent
+    data class UpdateUniformPantsOrSkirtSize(val value: String) : AddStudentUiEvent
+    data class UpdateUniformShoeSize(val value: String) : AddStudentUiEvent
+    object Save : AddStudentUiEvent
+}
 
-    private val _formState = MutableStateFlow(AddStudentFormState())
-    val formState: StateFlow<AddStudentFormState> = _formState.asStateFlow()
+class AddStudentViewModel(private val repository: StudentRepository) : ViewModel() {
 
-    fun update(transform: (AddStudentFormState) -> AddStudentFormState) {
-        _formState.value = transform(_formState.value).copy(error = null, saved = false)
+    private val _uiState = MutableStateFlow(AddStudentUiState())
+    val uiState: StateFlow<AddStudentUiState> = _uiState.asStateFlow()
+
+    fun onEvent(event: AddStudentUiEvent) {
+        when (event) {
+            is AddStudentUiEvent.UpdateNis -> _uiState.value = _uiState.value.copy(nis = event.value)
+            is AddStudentUiEvent.UpdateName -> _uiState.value = _uiState.value.copy(name = event.value)
+            is AddStudentUiEvent.UpdateGuardianName -> _uiState.value = _uiState.value.copy(guardianName = event.value)
+            is AddStudentUiEvent.UpdateWhatsappNumber -> _uiState.value = _uiState.value.copy(whatsappNumber = event.value)
+            is AddStudentUiEvent.UpdateUniformShirtSize -> _uiState.value = _uiState.value.copy(uniformShirtSize = event.value)
+            is AddStudentUiEvent.UpdateUniformPantsOrSkirtSize -> _uiState.value = _uiState.value.copy(uniformPantsOrSkirtSize = event.value)
+            is AddStudentUiEvent.UpdateUniformShoeSize -> _uiState.value = _uiState.value.copy(uniformShoeSize = event.value)
+            AddStudentUiEvent.Save -> save()
+        }
     }
 
-    fun save() {
-        val s = _formState.value
+    private fun save() {
+        val s = _uiState.value
         if (s.name.isBlank()) {
-            _formState.value = s.copy(error = "Nama murid wajib diisi")
+            _uiState.value = s.copy(error = "Nama murid wajib diisi")
             return
         }
         if (s.guardianName.isBlank()) {
-            _formState.value = s.copy(error = "Nama wali wajib diisi")
+            _uiState.value = s.copy(error = "Nama wali wajib diisi")
             return
         }
 
-        _formState.value = s.copy(isSaving = true)
+        _uiState.value = s.copy(isSaving = true)
         viewModelScope.launch {
             repository.addStudent(
                 Student(
@@ -57,7 +77,7 @@ class AddStudentViewModel(private val repository: CashRepository) : ViewModel() 
                     uniformStatus = UniformStatus.BELUM_DIAMBIL
                 )
             )
-            _formState.value = AddStudentFormState(saved = true)
+            _uiState.value = _uiState.value.copy(saved = true, isSaving = false)
         }
     }
 }

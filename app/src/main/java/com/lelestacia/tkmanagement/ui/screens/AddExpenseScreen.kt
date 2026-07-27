@@ -24,6 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.lelestacia.tkmanagement.data.model.ExpenseCategory
 import com.lelestacia.tkmanagement.ui.theme.MoneyOut
+import com.lelestacia.tkmanagement.viewmodel.AddExpenseUiEvent
 import com.lelestacia.tkmanagement.viewmodel.AddExpenseViewModel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -45,10 +46,10 @@ fun AddExpenseScreen(
         ) {
             Text("Kategori", style = MaterialTheme.typography.titleMedium)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                ExpenseCategory.entries.forEach { category ->
+                ExpenseCategory.values().forEach { category ->
                     FilterChip(
                         selected = state.category == category,
-                        onClick = { viewModel.onCategoryChange(category) },
+                        onClick = { viewModel.onEvent(AddExpenseUiEvent.CategoryChange(category)) },
                         label = { Text(category.name) }
                     )
                 }
@@ -56,14 +57,14 @@ fun AddExpenseScreen(
 
             OutlinedTextField(
                 value = state.amountInput,
-                onValueChange = viewModel::onAmountChange,
+                onValueChange = { viewModel.onEvent(AddExpenseUiEvent.AmountChange(it)) },
                 label = { Text("Nominal (Rp)") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
             OutlinedTextField(
                 value = state.note,
-                onValueChange = viewModel::onNoteChange,
+                onValueChange = { viewModel.onEvent(AddExpenseUiEvent.NoteChange(it)) },
                 label = { Text("Keterangan (opsional)") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
@@ -74,7 +75,7 @@ fun AddExpenseScreen(
             }
 
             Button(
-                onClick = viewModel::save,
+                onClick = { viewModel.onEvent(AddExpenseUiEvent.Save) },
                 enabled = !state.isSaving,
                 modifier = Modifier.fillMaxWidth()
             ) {
