@@ -30,18 +30,11 @@ import com.lelestacia.tkmanagement.viewmodel.AddPaymentViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddPaymentScreen(
-    studentId: Long,
-    studentName: String,
-    preselectedFeeId: Long?,
     viewModel: AddPaymentViewModel,
     onSaved: () -> Unit
 ) {
     val state by viewModel.uiState.collectAsState()
 
-    LaunchedEffect(studentId) {
-        viewModel.load(studentId, studentName)
-        if (preselectedFeeId != null) viewModel.selectFee(preselectedFeeId)
-    }
     LaunchedEffect(state.saved) { if (state.saved) onSaved() }
 
     Scaffold(

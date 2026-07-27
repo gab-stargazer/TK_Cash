@@ -1,6 +1,5 @@
 package com.lelestacia.tkmanagement.viewmodel
 
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lelestacia.tkmanagement.data.model.Payment
@@ -8,10 +7,10 @@ import com.lelestacia.tkmanagement.data.model.Student
 import com.lelestacia.tkmanagement.data.relation.FeeProgress
 import com.lelestacia.tkmanagement.data.repository.CashRepository
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 
 data class StudentDetailUiState(
     val isLoading: Boolean = true,
@@ -24,40 +23,32 @@ data class StudentDetailUiState(
 /** studentId biasanya datang dari NavGraph lewat SavedStateHandle. */
 class StudentDetailViewModel(
     private val repository: CashRepository,
-    savedStateHandle: SavedStateHandle? = null
+    private val studentId: Long
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(StudentDetailUiState())
-    val uiState: StateFlow<StudentDetailUiState> = _uiState.asStateFlow()
-
-    private var loadedStudentId: Long? = null
-
-    init {
-        savedStateHandle?.get<Long>("studentId")?.let { load(it) }
-    }
-
-    fun load(studentId: Long) {
-        if (loadedStudentId == studentId) return
-        loadedStudentId = studentId
-
-        viewModelScope.launch {
-            val student = repository.getStudent(studentId)
-            _uiState.value = _uiState.value.copy(isLoading = false, student = student)
-        }
-
-        // Live: recomposes automatically whenever student_fees or payments
-        // change in Room — no manual reload after recording a payment.
-        viewModelScope.launch {
-            repository.getFeeProgressForStudent(studentId).collectLatest { fees ->
-                _uiState.value = _uiState.value.copy(fees = fees)
-            }
-        }
-        viewModelScope.launch {
-            repository.getPaymentsForStudent(studentId).collectLatest { payments ->
-                _uiState.value = _uiState.value.copy(payments = payments)
-            }
-        }
-    }
+    val uiState: StateFlow<StudentDetailUiState> = combine(
+        flow = _uiState,
+        flow2 = repository.readStudentDataById(studentId),
+        flow3 = repository.readFeeProgressForStudentById(studentId),
+        flow4 = repository.readPaymentsForStudentById(studentId)
+    ) { state, student, feeProgress, payments ->
+        state.copy(
+            student = student,
+            fees = feeProgress,
+            payments = payments,
+            isLoading = false
+        )
+    }.stateIn(
+        viewModelScope,
+        SharingStarted.Lazily,
+        StudentDetailUiState(
+            isLoading = true,
+            student = null,
+            fees = emptyList(),
+            payments = emptyList()
+        )
+    )
 
     /** Tombol "Lihat Riwayat Lengkap". */
     fun toggleFullHistory() {

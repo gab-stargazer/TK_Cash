@@ -11,13 +11,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import java.math.BigDecimal
 
 data class AddPaymentUiState(
     val studentId: Long = 0,
     val studentName: String = "",
     val availableFees: List<StudentFee> = emptyList(),
     val selectedFeeId: Long? = null,
-    val remainingForSelectedFee: Long? = null,
+    val remainingForSelectedFee: BigDecimal? = null,
     val amountInput: String = "",
     val note: String = "",
     val error: String? = null,
@@ -25,17 +26,25 @@ data class AddPaymentUiState(
     val saved: Boolean = false
 )
 
-class AddPaymentViewModel(private val repository: CashRepository) : ViewModel() {
+class AddPaymentViewModel(
+    private val repository: CashRepository,
+    private val studentId: Long,
+    private val studentName: String,
+    private val preselectedFeeId: Long?
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AddPaymentUiState())
     val uiState: StateFlow<AddPaymentUiState> = _uiState.asStateFlow()
 
-    fun load(studentId: Long, studentName: String) {
+    init {
         _uiState.value = _uiState.value.copy(studentId = studentId, studentName = studentName)
         viewModelScope.launch {
             repository.getFeesForStudent(studentId).collectLatest { fees ->
                 _uiState.value = _uiState.value.copy(availableFees = fees)
             }
+        }
+        if (preselectedFeeId != null) {
+            selectFee(preselectedFeeId)
         }
     }
 
@@ -52,7 +61,7 @@ class AddPaymentViewModel(private val repository: CashRepository) : ViewModel() 
     }
 
     /** Membuat tagihan baru langsung dari form ini (mis. "SPP Agustus 2026"). */
-    fun createFeeAndSelect(feeType: FeeType, label: String, totalAmount: Long) {
+    fun createFeeAndSelect(feeType: FeeType, label: String, totalAmount: BigDecimal) {
         viewModelScope.launch {
             val id = repository.addFee(
                 StudentFee(studentId = _uiState.value.studentId, feeType = feeType, label = label, totalAmount = totalAmount)
@@ -71,8 +80,8 @@ class AddPaymentViewModel(private val repository: CashRepository) : ViewModel() 
 
     fun save() {
         val s = _uiState.value
-        val amount = s.amountInput.toLongOrNull()
-        if (amount == null || amount <= 0) {
+        val amount = s.amountInput.toBigDecimalOrNull()
+        if (amount == null || amount <= BigDecimal.ZERO) {
             _uiState.value = s.copy(error = "Masukkan nominal yang valid")
             return
         }

@@ -4,8 +4,15 @@ import androidx.room.TypeConverter
 import com.lelestacia.tkmanagement.data.model.ExpenseCategory
 import com.lelestacia.tkmanagement.data.model.FeeType
 import com.lelestacia.tkmanagement.data.model.UniformStatus
+import java.math.BigDecimal
 
 class Converters {
+    @TypeConverter
+    fun fromBigDecimal(value: BigDecimal?): String? = value?.toString()
+
+    @TypeConverter
+    fun toBigDecimal(value: String?): BigDecimal? = value?.let { BigDecimal(it) }
+
     @TypeConverter
     fun fromFeeType(value: FeeType): String = value.name
     @TypeConverter

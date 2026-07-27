@@ -1,6 +1,7 @@
 package com.lelestacia.tkmanagement.data.relation
 
 import com.lelestacia.tkmanagement.data.model.FeeType
+import java.math.BigDecimal
 
 /**
  * Progres satu tagihan (dipakai di layar detail murid).
@@ -13,7 +14,7 @@ data class FeeProgress(
     val studentId: Long,
     val feeType: FeeType,
     val label: String,
-    val totalAmount: Long,
-    val paidAmount: Long,
-    val remaining: Long
+    val totalAmount: BigDecimal,
+    val paidAmount: BigDecimal,
+    val remaining: BigDecimal
 )

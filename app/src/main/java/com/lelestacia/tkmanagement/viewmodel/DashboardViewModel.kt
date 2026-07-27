@@ -9,12 +9,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import java.math.BigDecimal
 
 data class DashboardUiState(
     val isLoading: Boolean = true,
-    val saldoKas: Long = 0,
-    val totalPemasukan: Long = 0,
-    val totalPengeluaran: Long = 0,
+    val saldoKas: BigDecimal = BigDecimal.ZERO,
+    val totalPemasukan: BigDecimal = BigDecimal.ZERO,
+    val totalPengeluaran: BigDecimal = BigDecimal.ZERO,
     val topTunggakan: List<TunggakanItem> = emptyList()
 )
 

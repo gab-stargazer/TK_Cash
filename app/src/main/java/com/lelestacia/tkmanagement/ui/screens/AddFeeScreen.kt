@@ -38,14 +38,11 @@ private fun feeTypeLabel(type: FeeType) = when (type) {
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun AddFeeScreen(
-    studentId: Long,
-    studentName: String,
     viewModel: AddFeeViewModel,
     onSaved: () -> Unit
 ) {
     val state by viewModel.uiState.collectAsState()
 
-    LaunchedEffect(studentId) { viewModel.load(studentId, studentName) }
     LaunchedEffect(state.saved) { if (state.saved) onSaved() }
 
     Scaffold(
