@@ -7,7 +7,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,7 +22,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.lelestacia.tkmanagement.data.model.FeeType
 import com.lelestacia.tkmanagement.data.model.Payment
 import com.lelestacia.tkmanagement.data.model.Student
@@ -31,7 +30,7 @@ import com.lelestacia.tkmanagement.data.relation.FeeWithPayments
 import com.lelestacia.tkmanagement.data.relation.StudentWithFullHistory
 import com.lelestacia.tkmanagement.ui.components.MoneyText
 import com.lelestacia.tkmanagement.ui.theme.TkCashTheme
-import com.lelestacia.tkmanagement.ui.utils.ImageExportUtils
+import com.lelestacia.tkmanagement.ui.utils.FileExportUtils
 import com.lelestacia.tkmanagement.viewmodel.FullReceiptUiState
 import com.lelestacia.tkmanagement.viewmodel.FullReceiptViewModel
 import kotlinx.coroutines.launch
@@ -61,6 +60,7 @@ private fun FullReceiptContent(
     val context = LocalContext.current
     val graphicsLayer = rememberGraphicsLayer()
     val coroutineScope = rememberCoroutineScope()
+    var showMenu by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -73,43 +73,60 @@ private fun FullReceiptContent(
                 },
                 actions = {
                     if (state.history != null) {
-                        IconButton(onClick = {
-                            coroutineScope.launch {
-                                try {
-                                    val bitmap = graphicsLayer.toImageBitmap().asAndroidBitmap()
-                                    val uri = ImageExportUtils.saveBitmapToGallery(
-                                        context,
-                                        bitmap,
-                                        "Laporan_${
-                                            state.history.student.name.replace(
-                                                " ",
-                                                "_"
-                                            )
-                                        }_${System.currentTimeMillis()}"
-                                    )
-                                    if (uri != null) {
-                                        Toast.makeText(
-                                            context,
-                                            "Laporan disimpan ke Galeri",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    } else {
-                                        Toast.makeText(
-                                            context,
-                                            "Gagal menyimpan laporan",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
-                                } catch (e: Exception) {
-                                    Toast.makeText(
-                                        context,
-                                        "Error: ${e.message}",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                }
+                        Box {
+                            IconButton(onClick = { showMenu = true }) {
+                                Icon(Icons.Default.MoreVert, contentDescription = "Opsi Ekspor")
                             }
-                        }) {
-                            Icon(Icons.Default.Download, contentDescription = "Simpan ke Galeri")
+                            DropdownMenu(
+                                expanded = showMenu,
+                                onDismissRequest = { showMenu = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Simpan Gambar (PNG)") },
+                                    onClick = {
+                                        showMenu = false
+                                        coroutineScope.launch {
+                                            try {
+                                                val bitmap = graphicsLayer.toImageBitmap().asAndroidBitmap()
+                                                val uri = FileExportUtils.saveBitmapToGallery(
+                                                    context,
+                                                    bitmap,
+                                                    "Laporan_${state.history.student.name.replace(" ", "_")}_${System.currentTimeMillis()}"
+                                                )
+                                                if (uri != null) {
+                                                    Toast.makeText(context, "Laporan disimpan ke Galeri", Toast.LENGTH_SHORT).show()
+                                                } else {
+                                                    Toast.makeText(context, "Gagal menyimpan laporan", Toast.LENGTH_SHORT).show()
+                                                }
+                                            } catch (e: Exception) {
+                                                Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                                            }
+                                        }
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Simpan Dokumen (PDF)") },
+                                    onClick = {
+                                        showMenu = false
+                                        coroutineScope.launch {
+                                            try {
+                                                val uri = FileExportUtils.saveFullReceiptAsPdf(
+                                                    context,
+                                                    state.history,
+                                                    "Laporan_${state.history.student.name.replace(" ", "_")}_${System.currentTimeMillis()}"
+                                                )
+                                                if (uri != null) {
+                                                    Toast.makeText(context, "Laporan disimpan ke Unduhan", Toast.LENGTH_SHORT).show()
+                                                } else {
+                                                    Toast.makeText(context, "Gagal menyimpan PDF", Toast.LENGTH_SHORT).show()
+                                                }
+                                            } catch (e: Exception) {
+                                                Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                                            }
+                                        }
+                                    }
+                                )
+                            }
                         }
                     }
                 }

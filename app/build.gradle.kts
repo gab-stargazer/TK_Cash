@@ -72,6 +72,9 @@ dependencies {
     // Serialization
     implementation(libs.kotlinx.serialization.json)
 
+    //  Itext
+    implementation("com.itextpdf:itext-core:9.7.0")
+
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
