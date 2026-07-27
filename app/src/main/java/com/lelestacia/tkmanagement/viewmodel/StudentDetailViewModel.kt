@@ -18,13 +18,10 @@ data class StudentDetailUiState(
     val isLoading: Boolean = true,
     val student: Student? = null,
     val fees: List<FeeProgress> = emptyList(),
-    val payments: List<Payment> = emptyList(),
-    val showFullHistory: Boolean = false
+    val payments: List<Payment> = emptyList()
 )
 
-sealed interface StudentDetailUiEvent {
-    object ToggleHistory : StudentDetailUiEvent
-}
+sealed interface StudentDetailUiEvent
 
 class StudentDetailViewModel(
     private val studentRepository: StudentRepository,
@@ -40,10 +37,9 @@ class StudentDetailViewModel(
         loadData()
     }
 
+    @Suppress("UNUSED_PARAMETER")
     fun onEvent(event: StudentDetailUiEvent) {
-        when (event) {
-            StudentDetailUiEvent.ToggleHistory -> toggleFullHistory()
-        }
+        // No UI events for now
     }
 
     private fun loadData() {
@@ -64,9 +60,5 @@ class StudentDetailViewModel(
                 _uiState.value = _uiState.value.copy(payments = payments)
             }
         }
-    }
-
-    private fun toggleFullHistory() {
-        _uiState.value = _uiState.value.copy(showFullHistory = !_uiState.value.showFullHistory)
     }
 }

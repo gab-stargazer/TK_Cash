@@ -10,6 +10,7 @@ data class TunggakanItem(
     val studentFeeId: Long,
     val studentId: Long,
     val studentName: String,
+    val guardianName: String,
     val feeLabel: String,
     val totalAmount: BigDecimal,
     val paidAmount: BigDecimal,

@@ -79,7 +79,13 @@ class AddPaymentViewModel(
     }
 
     private fun onAmountChange(value: String) {
-        _uiState.value = _uiState.value.copy(amountInput = value.filter { it.isDigit() }, error = null)
+        if (value.any { !it.isDigit() }) return
+        val cleanValue = if (value.startsWith("0") && value.length > 1) {
+            value.trimStart('0')
+        } else {
+            value
+        }
+        _uiState.value = _uiState.value.copy(amountInput = cleanValue, error = null)
     }
 
     private fun onNoteChange(value: String) {

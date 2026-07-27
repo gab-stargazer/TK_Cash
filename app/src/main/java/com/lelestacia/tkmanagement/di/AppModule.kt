@@ -27,7 +27,7 @@ val appModule = module {
     single { get<AppDatabase>().cashDao() }
 
     // Repositories
-    single<StudentRepository> { StudentRepositoryImpl(get()) }
+    single<StudentRepository> { StudentRepositoryImpl(get(), get()) }
     single<FeeRepository> { FeeRepositoryImpl(get()) }
     single<FinanceRepository> { FinanceRepositoryImpl(get(), get(), get(), get()) }
 
@@ -51,7 +51,8 @@ val appModule = module {
             StudentListScreen(
                 viewModel = get(),
                 onOpenStudent = { id -> nav.goTo(Destination.StudentDetail(id)) },
-                onAddStudent = { nav.goTo(Destination.AddStudent) }
+                onAddStudent = { nav.goTo(Destination.AddStudent) },
+                onBack = { nav.popBackStack() }
             )
         }
         navigation<Destination.AddStudent> {
@@ -76,8 +77,10 @@ val appModule = module {
                     nav.goTo(Destination.AddPayment(key.studentId, name, feeId))
                 },
                 onOpenReceipt = { feeId ->
-                    val name = vm.uiState.value.student?.name ?: ""
-                    nav.goTo(Destination.AddPayment(key.studentId, name, feeId))
+                    nav.goTo(Destination.Receipt(feeId))
+                },
+                onOpenFullReceipt = { id ->
+                    nav.goTo(Destination.FullReceipt(id))
                 },
                 onBack = { nav.popBackStack() }
             )
@@ -86,28 +89,46 @@ val appModule = module {
             val nav = get<Navigator>()
             AddFeeScreen(
                 viewModel = get { parametersOf(key.studentId, key.studentName) },
-                onSaved = { nav.popBackStack() }
+                onSaved = { nav.popBackStack() },
+                onBack = { nav.popBackStack() }
             )
         }
         navigation<Destination.AddPayment> { key ->
             val nav = get<Navigator>()
             AddPaymentScreen(
                 viewModel = get { parametersOf(key.studentId, key.studentName, key.preselectedFeeId) },
-                onSaved = { nav.popBackStack() }
+                onSaved = { nav.popBackStack() },
+                onBack = { nav.popBackStack() }
             )
         }
         navigation<Destination.AddExpense> {
             val nav = get<Navigator>()
             AddExpenseScreen(
                 viewModel = get(),
-                onSaved = { nav.popBackStack() }
+                onSaved = { nav.popBackStack() },
+                onBack = { nav.popBackStack() }
             )
         }
         navigation<Destination.Tunggakan> {
             val nav = get<Navigator>()
             TunggakanScreen(
                 viewModel = get(),
-                onOpenStudent = { id -> nav.goTo(Destination.StudentDetail(id)) }
+                onOpenStudent = { id -> nav.goTo(Destination.StudentDetail(id)) },
+                onBack = { nav.popBackStack() }
+            )
+        }
+        navigation<Destination.Receipt> { key ->
+            val nav = get<Navigator>()
+            ReceiptScreen(
+                viewModel = get { parametersOf(key.studentFeeId) },
+                onBack = { nav.popBackStack() }
+            )
+        }
+        navigation<Destination.FullReceipt> { key ->
+            val nav = get<Navigator>()
+            FullReceiptScreen(
+                viewModel = get { parametersOf(key.studentId) },
+                onBack = { nav.popBackStack() }
             )
         }
     }
@@ -123,6 +144,8 @@ val appModule = module {
     viewModel { params ->
         AddFeeViewModel(get(), params.get(), params.get())
     }
+    viewModel { params -> ReceiptViewModel(get(), get(), params.get()) }
+    viewModel { params -> FullReceiptViewModel(get(), params.get()) }
     viewModelOf(::AddExpenseViewModel)
     viewModelOf(::TunggakanViewModel)
 }

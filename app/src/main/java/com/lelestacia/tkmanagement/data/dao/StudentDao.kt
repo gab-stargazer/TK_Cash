@@ -3,6 +3,7 @@ package com.lelestacia.tkmanagement.data.dao
 import androidx.room.*
 import com.lelestacia.tkmanagement.data.model.Student
 import com.lelestacia.tkmanagement.data.relation.StudentWithFees
+import com.lelestacia.tkmanagement.data.relation.StudentWithFullHistory
 import com.lelestacia.tkmanagement.data.relation.StudentWithPayments
 import kotlinx.coroutines.flow.Flow
 
@@ -34,4 +35,8 @@ interface StudentDao {
     @Transaction
     @Query("SELECT * FROM students WHERE id = :studentId")
     suspend fun getWithPayments(studentId: Long): StudentWithPayments?
+
+    @Transaction
+    @Query("SELECT * FROM students WHERE id = :studentId")
+    suspend fun getFullHistory(studentId: Long): StudentWithFullHistory?
 }

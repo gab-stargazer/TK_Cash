@@ -49,6 +49,7 @@ interface FeeDao {
         SELECT
             sf.id AS studentFeeId,
             sf.studentId AS studentId,
+            s.guardianName AS guardianName,
             s.name AS studentName,
             sf.label AS feeLabel,
             CAST(sf.totalAmount AS TEXT) AS totalAmount,
@@ -71,6 +72,7 @@ interface FeeDao {
             sf.id AS studentFeeId,
             sf.studentId AS studentId,
             s.name AS studentName,
+            s.guardianName AS guardianName,
             sf.label AS feeLabel,
             CAST(sf.totalAmount AS TEXT) AS totalAmount,
             CAST(COALESCE(SUM(p.amount), '0') AS TEXT) AS paidAmount,

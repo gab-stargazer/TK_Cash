@@ -37,6 +37,7 @@ data class StudentFee(
     val feeType: FeeType,
     val label: String,
     val totalAmount: BigDecimal,
+    val note: String? = null,
     val dueDate: Long? = null,
     val createdAt: Long = Clock.System.now().toEpochMilliseconds(),
     val updatedAt: Long? = null

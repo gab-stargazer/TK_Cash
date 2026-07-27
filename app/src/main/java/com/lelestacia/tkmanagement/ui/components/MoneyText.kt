@@ -1,6 +1,7 @@
 package com.lelestacia.tkmanagement.ui.components
 
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -30,8 +31,14 @@ fun MoneyText(
     val prefix = if (signed && amount > BigDecimal.ZERO) "+" else ""
     Text(
         text = "$prefix${formatRupiah(amount)}",
-        style = if (small) MoneyTextStyleSmall else MoneyTextStyle,
-        color = color ?: (if (signed) (if (amount >= BigDecimal.ZERO) MoneyIn else MoneyOut) else Color.Unspecified),
+        style =
+            if (small) {
+                MaterialTheme.typography.bodySmall
+            } else {
+                MaterialTheme.typography.bodyMedium
+            },
+        color = color
+            ?: (if (signed) (if (amount >= BigDecimal.ZERO) MoneyIn else MoneyOut) else Color.Unspecified),
         modifier = modifier.padding(vertical = 0.dp)
     )
 }

@@ -5,7 +5,7 @@ package com.lelestacia.tkmanagement.data.model
  * PENDAFTARAN, SPP, SERAGAM, BUKU, KEGIATAN bisa dicicil (lihat StudentFee + Payment).
  */
 enum class FeeType {
-    PENDAFTARAN,
+    PEMBANGUNAN,
     SPP,
     SERAGAM,
     BUKU,

@@ -24,3 +24,13 @@ data class StudentWithPayments(
     )
     val payments: List<Payment>
 )
+
+data class StudentWithFullHistory(
+    @Embedded val student: Student,
+    @Relation(
+        entity = StudentFee::class,
+        parentColumn = "id",
+        entityColumn = "studentId"
+    )
+    val fees: List<FeeWithPayments>
+)

@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
+import java.util.Calendar
 
 data class AddFeeUiState(
     val studentId: Long = 0,
@@ -18,6 +19,9 @@ data class AddFeeUiState(
     val label: String = "",
     val labelManuallyEdited: Boolean = false,
     val amountInput: String = "",
+    val note: String = "",
+    val selectedMonth: Int = Calendar.getInstance().get(Calendar.MONTH) + 1,
+    val selectedYear: Int = Calendar.getInstance().get(Calendar.YEAR),
     val error: String? = null,
     val isSaving: Boolean = false,
     val saved: Boolean = false
@@ -27,6 +31,9 @@ sealed interface AddFeeUiEvent {
     data class TypeChange(val type: FeeType) : AddFeeUiEvent
     data class LabelChange(val value: String) : AddFeeUiEvent
     data class AmountChange(val value: String) : AddFeeUiEvent
+    data class NoteChange(val value: String) : AddFeeUiEvent
+    data class MonthChange(val month: Int) : AddFeeUiEvent
+    data class YearChange(val year: Int) : AddFeeUiEvent
     object Save : AddFeeUiEvent
 }
 
@@ -45,7 +52,7 @@ class AddFeeViewModel(
         _uiState.value = s.copy(
             studentId = studentId,
             studentName = studentName,
-            label = if (s.labelManuallyEdited) s.label else defaultLabelFor(s.feeType)
+            label = generateLabel(s.feeType, s.selectedMonth, s.selectedYear)
         )
     }
 
@@ -54,34 +61,83 @@ class AddFeeViewModel(
             is AddFeeUiEvent.TypeChange -> onFeeTypeChange(event.type)
             is AddFeeUiEvent.LabelChange -> onLabelChange(event.value)
             is AddFeeUiEvent.AmountChange -> onAmountChange(event.value)
+            is AddFeeUiEvent.NoteChange -> onNoteChange(event.value)
+            is AddFeeUiEvent.MonthChange -> onMonthChange(event.month)
+            is AddFeeUiEvent.YearChange -> onYearChange(event.year)
             AddFeeUiEvent.Save -> save()
         }
     }
 
-    private fun defaultLabelFor(type: FeeType) = when (type) {
-        FeeType.PENDAFTARAN -> "Pendaftaran"
-        FeeType.SPP -> "SPP"
-        FeeType.SERAGAM -> "Seragam"
-        FeeType.BUKU -> "Buku"
-        FeeType.KEGIATAN -> "Kegiatan"
-        FeeType.LAINNYA -> ""
+    private fun generateLabel(type: FeeType, month: Int, year: Int): String {
+        return when (type) {
+            FeeType.SPP -> "SPP ${monthName(month)} $year"
+            FeeType.PEMBANGUNAN -> "Pendaftaran"
+            FeeType.SERAGAM -> "Seragam"
+            FeeType.BUKU -> "Buku"
+            FeeType.KEGIATAN -> "Kegiatan"
+            FeeType.LAINNYA -> ""
+        }
+    }
+
+    private fun monthName(month: Int): String = when (month) {
+        1 -> "Januari"
+        2 -> "Februari"
+        3 -> "Maret"
+        4 -> "April"
+        5 -> "Mei"
+        6 -> "Juni"
+        7 -> "Juli"
+        8 -> "Agustus"
+        9 -> "September"
+        10 -> "Oktober"
+        11 -> "November"
+        12 -> "Desember"
+        else -> ""
     }
 
     private fun onFeeTypeChange(type: FeeType) {
         val s = _uiState.value
         _uiState.value = s.copy(
             feeType = type,
-            label = if (s.labelManuallyEdited) s.label else defaultLabelFor(type),
+            label = generateLabel(type, s.selectedMonth, s.selectedYear),
             error = null
         )
     }
 
     private fun onLabelChange(value: String) {
-        _uiState.value = _uiState.value.copy(label = value, labelManuallyEdited = true, error = null)
+        if (_uiState.value.feeType == FeeType.LAINNYA) {
+            _uiState.value = _uiState.value.copy(label = value, labelManuallyEdited = true, error = null)
+        }
     }
 
     private fun onAmountChange(value: String) {
-        _uiState.value = _uiState.value.copy(amountInput = value.filter { it.isDigit() }, error = null)
+        if (value.any { !it.isDigit() }) return
+        val cleanValue = if (value.startsWith("0") && value.length > 1) {
+            value.trimStart('0')
+        } else {
+            value
+        }
+        _uiState.value = _uiState.value.copy(amountInput = cleanValue, error = null)
+    }
+
+    private fun onNoteChange(value: String) {
+        _uiState.value = _uiState.value.copy(note = value)
+    }
+
+    private fun onMonthChange(month: Int) {
+        val s = _uiState.value
+        _uiState.value = s.copy(
+            selectedMonth = month,
+            label = generateLabel(s.feeType, month, s.selectedYear)
+        )
+    }
+
+    private fun onYearChange(year: Int) {
+        val s = _uiState.value
+        _uiState.value = s.copy(
+            selectedYear = year,
+            label = generateLabel(s.feeType, s.selectedMonth, year)
+        )
     }
 
     private fun save() {
@@ -103,7 +159,8 @@ class AddFeeViewModel(
                     studentId = s.studentId,
                     feeType = s.feeType,
                     label = s.label.trim(),
-                    totalAmount = amount
+                    totalAmount = amount,
+                    note = s.note.ifBlank { null }
                 )
             )
             _uiState.value = _uiState.value.copy(saved = true, isSaving = false)
