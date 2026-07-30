@@ -11,7 +11,7 @@ data class StudentWithFees(
     @Embedded val student: Student,
     @Relation(
         parentColumn = "id",
-        entityColumn = "studentId"
+        entityColumn = "student_id"
     )
     val fees: List<StudentFee>
 )
@@ -20,7 +20,7 @@ data class StudentWithPayments(
     @Embedded val student: Student,
     @Relation(
         parentColumn = "id",
-        entityColumn = "studentId"
+        entityColumn = "student_id"
     )
     val payments: List<Payment>
 )
@@ -30,7 +30,7 @@ data class StudentWithFullHistory(
     @Relation(
         entity = StudentFee::class,
         parentColumn = "id",
-        entityColumn = "studentId"
+        entityColumn = "student_id"
     )
     val fees: List<FeeWithPayments>
 )

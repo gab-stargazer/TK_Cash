@@ -1,5 +1,6 @@
 package com.lelestacia.tkmanagement.data.model
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -24,21 +25,29 @@ import kotlin.time.ExperimentalTime
         ForeignKey(
             entity = Student::class,
             parentColumns = ["id"],
-            childColumns = ["studentId"],
+            childColumns = ["student_id"],
             onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [Index("studentId")]
+    indices = [Index("student_id")]
 )
 data class StudentFee(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
+    @ColumnInfo(name = "student_id")
     val studentId: Long,
+    @ColumnInfo(name = "fee_type")
     val feeType: FeeType,
+    @ColumnInfo(name = "label")
     val label: String,
+    @ColumnInfo(name = "total_amount")
     val totalAmount: BigDecimal,
+    @ColumnInfo(name = "note")
     val note: String? = null,
+    @ColumnInfo(name = "due_date")
     val dueDate: Long? = null,
+    @ColumnInfo(name = "created_at")
     val createdAt: Long = Clock.System.now().toEpochMilliseconds(),
+    @ColumnInfo(name = "updated_at")
     val updatedAt: Long? = null
 )

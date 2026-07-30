@@ -21,6 +21,7 @@ sealed interface Destination {
     @Serializable data class AddFee(val studentId: Long, val studentName: String) : Destination
     @Serializable data class AddPayment(val studentId: Long, val studentName: String, val preselectedFeeId: Long? = null) : Destination
     @Serializable object AddExpense : Destination
+    @Serializable object AddBulkFee : Destination
     @Serializable object Tunggakan : Destination
     @Serializable data class Receipt(val studentFeeId: Long) : Destination
     @Serializable data class FullReceipt(val studentId: Long) : Destination

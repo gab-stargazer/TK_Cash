@@ -12,13 +12,13 @@ interface PaymentDao {
     @Insert
     suspend fun insert(payment: Payment): Long
 
-    @Query("SELECT * FROM payments WHERE studentId = :studentId ORDER BY paymentDate DESC")
+    @Query("SELECT * FROM payments WHERE student_id = :studentId ORDER BY payment_date DESC")
     fun getPaymentsForStudent(studentId: Long): Flow<List<Payment>>
 
-    @Query("SELECT * FROM payments WHERE studentFeeId = :studentFeeId ORDER BY paymentDate ASC")
+    @Query("SELECT * FROM payments WHERE student_fee_id = :studentFeeId ORDER BY payment_date ASC")
     fun getPaymentsForFee(studentFeeId: Long): Flow<List<Payment>>
 
-    @Query("SELECT CAST(COALESCE(SUM(amount), '0') AS TEXT) FROM payments WHERE paymentDate BETWEEN :start AND :end")
+    @Query("SELECT CAST(COALESCE(SUM(amount), '0') AS TEXT) FROM payments WHERE payment_date BETWEEN :start AND :end")
     suspend fun getTotalIncomeBetween(start: Long, end: Long): BigDecimal
 
     @Query("SELECT CAST(COALESCE(SUM(amount), '0') AS TEXT) FROM payments")

@@ -24,8 +24,8 @@ interface CashDao {
     @Query(
         """
         SELECT CAST(
-            (SELECT COALESCE(SUM(amount), 0) FROM payments WHERE paymentDate BETWEEN :start AND :end) -
-            (SELECT COALESCE(SUM(amount), 0) FROM expenses WHERE expenseDate BETWEEN :start AND :end)
+            (SELECT COALESCE(SUM(amount), 0) FROM payments WHERE payment_date BETWEEN :start AND :end) -
+            (SELECT COALESCE(SUM(amount), 0) FROM expenses WHERE expense_date BETWEEN :start AND :end)
         AS TEXT)
         """
     )

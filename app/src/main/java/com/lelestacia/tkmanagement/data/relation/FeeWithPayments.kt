@@ -9,7 +9,7 @@ data class FeeWithPayments(
     @Embedded val fee: StudentFee,
     @Relation(
         parentColumn = "id",
-        entityColumn = "studentFeeId"
+        entityColumn = "student_fee_id"
     )
     val payments: List<Payment>
 )

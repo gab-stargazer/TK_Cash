@@ -10,6 +10,7 @@ interface FeeRepository {
     fun getFeesForStudent(studentId: Long): Flow<List<StudentFee>>
     fun readFeeProgressForStudentById(studentId: Long): Flow<List<FeeProgress>>
     suspend fun addFee(fee: StudentFee): Long
+    suspend fun addBulkFee(feeTemplate: StudentFee, studentIds: List<Long>)
     fun getTunggakanList(): Flow<List<TunggakanItem>>
     suspend fun getFeeStatus(studentFeeId: Long): TunggakanItem?
 }
@@ -21,6 +22,14 @@ class FeeRepositoryImpl(
     override fun readFeeProgressForStudentById(studentId: Long): Flow<List<FeeProgress>> =
         feeDao.getFeeProgressForStudent(studentId)
     override suspend fun addFee(fee: StudentFee): Long = feeDao.insert(fee)
+    
+    override suspend fun addBulkFee(feeTemplate: StudentFee, studentIds: List<Long>) {
+        val fees = studentIds.map { id ->
+            feeTemplate.copy(id = 0, studentId = id)
+        }
+        feeDao.insertBulk(fees)
+    }
+
     override fun getTunggakanList(): Flow<List<TunggakanItem>> = feeDao.getTunggakanList()
     override suspend fun getFeeStatus(studentFeeId: Long): TunggakanItem? = feeDao.getFeeStatus(studentFeeId)
 }

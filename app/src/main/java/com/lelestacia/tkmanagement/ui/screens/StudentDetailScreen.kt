@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -27,6 +28,7 @@ import com.lelestacia.tkmanagement.ui.components.LunasChip
 import com.lelestacia.tkmanagement.ui.components.MoneyText
 import com.lelestacia.tkmanagement.ui.components.TunggakanChip
 import com.lelestacia.tkmanagement.ui.theme.TkCashTheme
+import com.lelestacia.tkmanagement.viewmodel.StudentDetailUiEvent
 import com.lelestacia.tkmanagement.viewmodel.StudentDetailUiState
 import com.lelestacia.tkmanagement.viewmodel.StudentDetailViewModel
 import kotlinx.coroutines.launch
@@ -45,6 +47,7 @@ fun StudentDetailScreen(
 
     StudentDetailContent(
         state = state,
+        onEvent = viewModel::onEvent,
         onAddFee = onAddFee,
         onAddPayment = onAddPayment,
         onOpenReceipt = onOpenReceipt,
@@ -57,6 +60,7 @@ fun StudentDetailScreen(
 @Composable
 private fun StudentDetailContent(
     state: StudentDetailUiState,
+    onEvent: (StudentDetailUiEvent) -> Unit,
     onAddFee: () -> Unit,
     onAddPayment: (feeId: Long?) -> Unit,
     onOpenReceipt: (feeId: Long) -> Unit,
@@ -69,7 +73,12 @@ private fun StudentDetailContent(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(state.student?.name ?: "Detail Murid", fontWeight = FontWeight.SemiBold) },
+                title = {
+                    Text(
+                        state.student?.name ?: "Detail Murid",
+                        fontWeight = FontWeight.SemiBold
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali")
@@ -78,7 +87,10 @@ private fun StudentDetailContent(
                 actions = {
                     state.student?.let { s ->
                         IconButton(onClick = { onOpenFullReceipt(s.id) }) {
-                            Icon(Icons.AutoMirrored.Filled.ReceiptLong, contentDescription = "Laporan Lengkap")
+                            Icon(
+                                Icons.AutoMirrored.Filled.ReceiptLong,
+                                contentDescription = "Laporan Lengkap"
+                            )
                         }
                     }
                 }
@@ -136,11 +148,49 @@ private fun StudentDetailContent(
                             )
                         }
 
-                        if (s.uniformShirtSize != null || s.uniformPantsOrSkirtSize != null || s.uniformShoeSize != null) {
-                            Text(
-                                "Seragam: ${s.uniformShirtSize ?: "-"} / ${s.uniformPantsOrSkirtSize ?: "-"} / ${s.uniformShoeSize ?: "-"}",
-                                style = MaterialTheme.typography.bodyMedium
-                            )
+                        Text(
+                            "Seragam: ${s.uniformShirtSize} / ${s.uniformPantsOrSkirtSize}",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+
+                        Spacer(Modifier.height(16.dp))
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1F)) {
+                                Text(
+                                    text = if (s.isGraduated) "Status: Sudah Lulus" else "Status: Masih Aktif",
+                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
+                                )
+
+                                if (!s.isGraduated && state.hasOutstandingFees) {
+                                    Text(
+                                        "Selesaikan semua tagihan sebelum meluluskan murid.",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.error
+                                    )
+                                }
+                                state.graduationMessage?.let { msg ->
+                                    Text(
+                                        msg,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+
+                            if (!s.isGraduated) {
+                                val canGraduate = !state.hasOutstandingFees
+                                Button(
+                                    onClick = { onEvent(StudentDetailUiEvent.Graduate) },
+                                    enabled = canGraduate,
+                                    modifier = Modifier.padding(start = 12.dp)
+                                ) {
+                                    Text("Luluskan")
+                                }
+                            }
                         }
                     }
                 }
@@ -185,7 +235,12 @@ private fun FeeListPage(
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
+        contentPadding = PaddingValues(
+            top = 12.dp,
+            bottom = 120.dp,
+            start = 12.dp,
+            end = 12.dp
+        ),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         if (state.fees.isEmpty()) {
@@ -316,7 +371,10 @@ private fun PaymentHistoryPage(state: StudentDetailUiState) {
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Column {
-                        Text(payment.note ?: "Pembayaran", style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            payment.note ?: "Pembayaran",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
                     }
                     MoneyText(payment.amount, small = true)
                 }
@@ -333,14 +391,36 @@ private fun StudentDetailPreview() {
         StudentDetailContent(
             state = StudentDetailUiState(
                 isLoading = false,
-                student = Student(id = 1, name = "Kamil", guardianName = "Wali Kamil", whatsappNumber = "08123456789"),
+                student = Student(
+                    id = 1,
+                    name = "Kamil",
+                    guardianName = "Wali Kamil",
+                    whatsappNumber = "08123456789",
+                    uniformShirtSize = "M",
+                    uniformPantsOrSkirtSize = "M"
+                ),
                 fees = listOf(
-                    FeeProgress(1, 1, FeeType.SPP, "SPP Juli 2026", BigDecimal("350000"), BigDecimal("100000"), BigDecimal("250000"))
+                    FeeProgress(
+                        1,
+                        1,
+                        FeeType.SPP,
+                        "SPP Juli 2026",
+                        BigDecimal("350000"),
+                        BigDecimal("100000"),
+                        BigDecimal("250000")
+                    )
                 ),
                 payments = listOf(
-                    Payment(id = 1, studentId = 1, studentFeeId = 1, amount = BigDecimal("100000"), note = "Bayar SPP")
+                    Payment(
+                        id = 1,
+                        studentId = 1,
+                        studentFeeId = 1,
+                        amount = BigDecimal("100000"),
+                        note = "Bayar SPP"
+                    )
                 )
             ),
+            onEvent = {},
             onAddFee = {},
             onAddPayment = {},
             onOpenReceipt = {},

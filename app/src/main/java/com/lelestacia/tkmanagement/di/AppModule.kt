@@ -42,6 +42,7 @@ val appModule = module {
                 viewModel = get(),
                 onAddPayment = { nav.goTo(Destination.StudentList) },
                 onAddExpense = { nav.goTo(Destination.AddExpense) },
+                onAddBulkFee = { nav.goTo(Destination.AddBulkFee) },
                 onOpenStudents = { nav.goTo(Destination.StudentList) },
                 onOpenTunggakan = { nav.goTo(Destination.Tunggakan) }
             )
@@ -109,6 +110,14 @@ val appModule = module {
                 onBack = { nav.popBackStack() }
             )
         }
+        navigation<Destination.AddBulkFee> {
+            val nav = get<Navigator>()
+            AddBulkFeeScreen(
+                viewModel = get(),
+                onSaved = { nav.popBackStack() },
+                onBack = { nav.popBackStack() }
+            )
+        }
         navigation<Destination.Tunggakan> {
             val nav = get<Navigator>()
             TunggakanScreen(
@@ -147,5 +156,6 @@ val appModule = module {
     viewModel { params -> ReceiptViewModel(get(), get(), params.get()) }
     viewModel { params -> FullReceiptViewModel(get(), params.get()) }
     viewModelOf(::AddExpenseViewModel)
+    viewModelOf(::AddBulkFeeViewModel)
     viewModelOf(::TunggakanViewModel)
 }

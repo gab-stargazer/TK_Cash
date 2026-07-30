@@ -7,6 +7,7 @@ import com.lelestacia.tkmanagement.data.model.Student
 import com.lelestacia.tkmanagement.data.relation.FeeProgress
 import com.lelestacia.tkmanagement.data.repository.FeeRepository
 import com.lelestacia.tkmanagement.data.repository.FinanceRepository
+import com.lelestacia.tkmanagement.data.repository.GraduateResult
 import com.lelestacia.tkmanagement.data.repository.StudentRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,10 +19,15 @@ data class StudentDetailUiState(
     val isLoading: Boolean = true,
     val student: Student? = null,
     val fees: List<FeeProgress> = emptyList(),
-    val payments: List<Payment> = emptyList()
+    val payments: List<Payment> = emptyList(),
+    val hasOutstandingFees: Boolean = false,
+    val graduationMessage: String? = null
 )
 
-sealed interface StudentDetailUiEvent
+sealed interface StudentDetailUiEvent {
+    data object Graduate : StudentDetailUiEvent
+    data object DismissMessage : StudentDetailUiEvent
+}
 
 class StudentDetailViewModel(
     private val studentRepository: StudentRepository,
@@ -37,9 +43,24 @@ class StudentDetailViewModel(
         loadData()
     }
 
-    @Suppress("UNUSED_PARAMETER")
     fun onEvent(event: StudentDetailUiEvent) {
-        // No UI events for now
+        when (event) {
+            StudentDetailUiEvent.Graduate -> graduate()
+            StudentDetailUiEvent.DismissMessage -> _uiState.value = _uiState.value.copy(graduationMessage = null)
+        }
+    }
+
+    private fun graduate() {
+        viewModelScope.launch {
+            when (val result = studentRepository.graduateStudent(studentId)) {
+                is GraduateResult.Success -> _uiState.value = _uiState.value.copy(
+                    graduationMessage = "${result.graduatedCount} murid diluluskan."
+                )
+                is GraduateResult.Skipped -> _uiState.value = _uiState.value.copy(
+                    graduationMessage = "Tidak bisa diluluskan: masih ada tagihan yang belum lunas."
+                )
+            }
+        }
     }
 
     private fun loadData() {
@@ -58,6 +79,12 @@ class StudentDetailViewModel(
         viewModelScope.launch {
             financeRepository.readPaymentsForStudentById(studentId).collectLatest { payments ->
                 _uiState.value = _uiState.value.copy(payments = payments)
+            }
+        }
+
+        viewModelScope.launch {
+            studentRepository.hasOutstandingFees(studentId).collectLatest { has ->
+                _uiState.value = _uiState.value.copy(hasOutstandingFees = has)
             }
         }
     }

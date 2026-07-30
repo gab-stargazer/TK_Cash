@@ -69,8 +69,9 @@ private fun AddStudentContent(
             OutlinedTextField(
                 value = state.name,
                 onValueChange = { onEvent(AddStudentUiEvent.UpdateName(it)) },
-                label = { Text("Nama murid") },
+                label = { Text("Nama murid*") },
                 singleLine = true,
+                isError = state.name.isBlank() && state.error != null,
                 modifier = Modifier.fillMaxWidth()
             )
             OutlinedTextField(
@@ -83,15 +84,17 @@ private fun AddStudentContent(
             OutlinedTextField(
                 value = state.guardianName,
                 onValueChange = { onEvent(AddStudentUiEvent.UpdateGuardianName(it)) },
-                label = { Text("Nama wali") },
+                label = { Text("Nama wali*") },
                 singleLine = true,
+                isError = state.guardianName.isBlank() && state.error != null,
                 modifier = Modifier.fillMaxWidth()
             )
             OutlinedTextField(
                 value = state.whatsappNumber,
                 onValueChange = { onEvent(AddStudentUiEvent.UpdateWhatsappNumber(it)) },
-                label = { Text("Nomor WhatsApp wali") },
+                label = { Text("Nomor WhatsApp wali*") },
                 singleLine = true,
+                isError = state.whatsappNumber.isBlank() && state.error != null,
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -100,30 +103,25 @@ private fun AddStudentContent(
                 OutlinedTextField(
                     value = state.uniformShirtSize,
                     onValueChange = { onEvent(AddStudentUiEvent.UpdateUniformShirtSize(it)) },
-                    label = { Text("Baju") },
+                    label = { Text("Baju*") },
                     singleLine = true,
+                    isError = state.uniformShirtSize.isBlank() && state.error != null,
                     modifier = Modifier.weight(1f)
                 )
                 OutlinedTextField(
                     value = state.uniformPantsOrSkirtSize,
                     onValueChange = { onEvent(AddStudentUiEvent.UpdateUniformPantsOrSkirtSize(it)) },
-                    label = { Text("Celana/Rok") },
+                    label = { Text("Celana/Rok*") },
                     singleLine = true,
-                    modifier = Modifier.weight(1f)
-                )
-                OutlinedTextField(
-                    value = state.uniformShoeSize,
-                    onValueChange = { onEvent(AddStudentUiEvent.UpdateUniformShoeSize(it)) },
-                    label = { Text("Sepatu") },
-                    singleLine = true,
+                    isError = state.uniformPantsOrSkirtSize.isBlank() && state.error != null,
                     modifier = Modifier.weight(1f)
                 )
             }
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth().clickable { 
-                    onEvent(AddStudentUiEvent.UpdateAlumniStatus(!state.isAlumniFamily)) 
+                modifier = Modifier.fillMaxWidth().clickable {
+                    onEvent(AddStudentUiEvent.UpdateAlumniStatus(!state.isAlumniFamily))
                 }
             ) {
                 Checkbox(
@@ -139,7 +137,7 @@ private fun AddStudentContent(
 
             Button(
                 onClick = { onEvent(AddStudentUiEvent.Save) },
-                enabled = !state.isSaving,
+                enabled = !state.isSaving && state.isValid,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(if (state.isSaving) "Menyimpan..." else "Simpan Murid")

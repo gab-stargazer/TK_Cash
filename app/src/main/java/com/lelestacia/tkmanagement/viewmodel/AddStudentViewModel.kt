@@ -17,12 +17,18 @@ data class AddStudentUiState(
     val whatsappNumber: String = "",
     val uniformShirtSize: String = "",
     val uniformPantsOrSkirtSize: String = "",
-    val uniformShoeSize: String = "",
     val isAlumniFamily: Boolean = false,
     val error: String? = null,
     val saved: Boolean = false,
     val isSaving: Boolean = false
-)
+) {
+    val isValid: Boolean
+        get() = name.isNotBlank() &&
+            guardianName.isNotBlank() &&
+            whatsappNumber.isNotBlank() &&
+            uniformShirtSize.isNotBlank() &&
+            uniformPantsOrSkirtSize.isNotBlank()
+}
 
 sealed interface AddStudentUiEvent {
     data class UpdateNis(val value: String) : AddStudentUiEvent
@@ -31,7 +37,6 @@ sealed interface AddStudentUiEvent {
     data class UpdateWhatsappNumber(val value: String) : AddStudentUiEvent
     data class UpdateUniformShirtSize(val value: String) : AddStudentUiEvent
     data class UpdateUniformPantsOrSkirtSize(val value: String) : AddStudentUiEvent
-    data class UpdateUniformShoeSize(val value: String) : AddStudentUiEvent
     data class UpdateAlumniStatus(val isAlumni: Boolean) : AddStudentUiEvent
     object Save : AddStudentUiEvent
 }
@@ -49,7 +54,6 @@ class AddStudentViewModel(private val repository: StudentRepository) : ViewModel
             is AddStudentUiEvent.UpdateWhatsappNumber -> _uiState.value = _uiState.value.copy(whatsappNumber = event.value)
             is AddStudentUiEvent.UpdateUniformShirtSize -> _uiState.value = _uiState.value.copy(uniformShirtSize = event.value)
             is AddStudentUiEvent.UpdateUniformPantsOrSkirtSize -> _uiState.value = _uiState.value.copy(uniformPantsOrSkirtSize = event.value)
-            is AddStudentUiEvent.UpdateUniformShoeSize -> _uiState.value = _uiState.value.copy(uniformShoeSize = event.value)
             is AddStudentUiEvent.UpdateAlumniStatus -> _uiState.value = _uiState.value.copy(isAlumniFamily = event.isAlumni)
             AddStudentUiEvent.Save -> save()
         }
@@ -57,17 +61,20 @@ class AddStudentViewModel(private val repository: StudentRepository) : ViewModel
 
     private fun save() {
         val state = _uiState.value
-        if (state.name.isBlank()) {
-            _uiState.value = state.copy(error = "Nama murid wajib diisi")
+        val firstError = when {
+            state.name.isBlank() -> "Nama murid wajib diisi"
+            state.guardianName.isBlank() -> "Nama wali wajib diisi"
+            state.whatsappNumber.isBlank() -> "Nomor WhatsApp wajib diisi"
+            state.uniformShirtSize.isBlank() -> "Ukuran baju wajib diisi"
+            state.uniformPantsOrSkirtSize.isBlank() -> "Ukuran celana/rok wajib diisi"
+            else -> null
+        }
+        if (firstError != null) {
+            _uiState.value = state.copy(error = firstError)
             return
         }
 
-        if (state.guardianName.isBlank()) {
-            _uiState.value = state.copy(error = "Nama wali wajib diisi")
-            return
-        }
-
-        _uiState.value = state.copy(isSaving = true)
+        _uiState.value = state.copy(isSaving = true, error = null)
         viewModelScope.launch {
             repository.addStudent(
                 Student(
@@ -75,9 +82,8 @@ class AddStudentViewModel(private val repository: StudentRepository) : ViewModel
                     name = state.name.trim(),
                     guardianName = state.guardianName.trim(),
                     whatsappNumber = state.whatsappNumber.trim(),
-                    uniformShirtSize = state.uniformShirtSize.ifBlank { null },
-                    uniformPantsOrSkirtSize = state.uniformPantsOrSkirtSize.ifBlank { null },
-                    uniformShoeSize = state.uniformShoeSize.ifBlank { null },
+                    uniformShirtSize = state.uniformShirtSize.trim(),
+                    uniformPantsOrSkirtSize = state.uniformPantsOrSkirtSize.trim(),
                     uniformStatus = UniformStatus.BELUM_DIAMBIL,
                 ),
                 isAlumniFamily = state.isAlumniFamily

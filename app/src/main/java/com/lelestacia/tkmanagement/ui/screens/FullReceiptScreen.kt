@@ -337,7 +337,9 @@ private fun FullReceiptPreview() {
         name = "Kamil Ahmad",
         guardianName = "Wali Kamil",
         whatsappNumber = "08123456789",
-        nis = "123456"
+        nis = "123456",
+        uniformShirtSize = "M",
+        uniformPantsOrSkirtSize = "M"
     )
 
     val mockFees = listOf(

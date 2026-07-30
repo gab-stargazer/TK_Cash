@@ -18,8 +18,17 @@ interface StudentDao {
     @Delete
     suspend fun delete(student: Student)
 
-    @Query("SELECT * FROM students WHERE isActive = 1 ORDER BY name ASC")
+    @Query("SELECT * FROM students WHERE is_graduated = 0 ORDER BY name ASC")
     fun getAllActive(): Flow<List<Student>>
+
+    @Query("SELECT id FROM students WHERE is_graduated = 0")
+    suspend fun getNonGraduatedIds(): List<Long>
+
+    @Query("UPDATE students SET is_graduated = 1, updated_at = :updatedAt WHERE id = :studentId AND is_graduated = 0")
+    suspend fun graduateStudent(studentId: Long, updatedAt: Long): Int
+
+    @Query("UPDATE students SET is_graduated = 1, updated_at = :updatedAt WHERE id IN (:studentIds) AND is_graduated = 0")
+    suspend fun graduateStudents(studentIds: List<Long>, updatedAt: Long): Int
 
     @Query("SELECT * FROM students WHERE name LIKE '%' || :query || '%' ORDER BY name ASC")
     fun search(query: String): Flow<List<Student>>
