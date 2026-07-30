@@ -24,6 +24,7 @@ import com.lelestacia.tkmanagement.data.model.FeeType
 import com.lelestacia.tkmanagement.data.model.Payment
 import com.lelestacia.tkmanagement.data.model.Student
 import com.lelestacia.tkmanagement.data.relation.FeeProgress
+import com.lelestacia.tkmanagement.data.relation.PaymentWithFee
 import com.lelestacia.tkmanagement.ui.components.LunasChip
 import com.lelestacia.tkmanagement.ui.components.MoneyText
 import com.lelestacia.tkmanagement.ui.components.TunggakanChip
@@ -363,7 +364,7 @@ private fun PaymentHistoryPage(state: StudentDetailUiState) {
                 )
             }
         } else {
-            items(state.payments, key = { it.id }) { payment ->
+            items(state.payments, key = { it.payment.id }) { item ->
                 Row(
                     Modifier
                         .fillMaxWidth()
@@ -372,11 +373,18 @@ private fun PaymentHistoryPage(state: StudentDetailUiState) {
                 ) {
                     Column {
                         Text(
-                            payment.note ?: "Pembayaran",
-                            style = MaterialTheme.typography.bodyMedium
+                            item.fee?.label ?: "Pembayaran Umum",
+                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
                         )
+                        item.payment.note?.let {
+                            Text(
+                                it,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
-                    MoneyText(payment.amount, small = true)
+                    MoneyText(item.payment.amount, small = true)
                 }
                 HorizontalDivider()
             }
@@ -411,12 +419,15 @@ private fun StudentDetailPreview() {
                     )
                 ),
                 payments = listOf(
-                    Payment(
-                        id = 1,
-                        studentId = 1,
-                        studentFeeId = 1,
-                        amount = BigDecimal("100000"),
-                        note = "Bayar SPP"
+                    PaymentWithFee(
+                        payment = Payment(
+                            id = 1,
+                            studentId = 1,
+                            studentFeeId = 1,
+                            amount = BigDecimal("100000"),
+                            note = "Bayar SPP"
+                        ),
+                        fee = null
                     )
                 )
             ),

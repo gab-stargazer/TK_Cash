@@ -6,11 +6,13 @@ import com.lelestacia.tkmanagement.data.dao.FeeDao
 import com.lelestacia.tkmanagement.data.dao.PaymentDao
 import com.lelestacia.tkmanagement.data.model.Expense
 import com.lelestacia.tkmanagement.data.model.Payment
+import com.lelestacia.tkmanagement.data.relation.PaymentWithFee
 import kotlinx.coroutines.flow.Flow
 import java.math.BigDecimal
 
 interface FinanceRepository {
     fun readPaymentsForStudentById(studentId: Long): Flow<List<Payment>>
+    fun readPaymentsWithFeeForStudentById(studentId: Long): Flow<List<PaymentWithFee>>
     fun getPaymentsForFee(studentFeeId: Long): Flow<List<Payment>>
     suspend fun recordPayment(payment: Payment): Result<Long>
     fun getAllExpenses(): Flow<List<Expense>>
@@ -27,8 +29,14 @@ class FinanceRepositoryImpl(
     private val cashDao: CashDao,
     private val feeDao: FeeDao
 ) : FinanceRepository {
-    override fun readPaymentsForStudentById(studentId: Long): Flow<List<Payment>> = paymentDao.getPaymentsForStudent(studentId)
-    override fun getPaymentsForFee(studentFeeId: Long): Flow<List<Payment>> = paymentDao.getPaymentsForFee(studentFeeId)
+    override fun readPaymentsForStudentById(studentId: Long): Flow<List<Payment>> =
+        paymentDao.getPaymentsForStudent(studentId)
+
+    override fun readPaymentsWithFeeForStudentById(studentId: Long): Flow<List<PaymentWithFee>> =
+        paymentDao.getPaymentsWithFeeForStudent(studentId)
+
+    override fun getPaymentsForFee(studentFeeId: Long): Flow<List<Payment>> =
+        paymentDao.getPaymentsForFee(studentFeeId)
 
     override suspend fun recordPayment(payment: Payment): Result<Long> {
         if (payment.amount <= BigDecimal.ZERO) return Result.failure(IllegalArgumentException("Nominal harus lebih dari 0"))
@@ -51,5 +59,6 @@ class FinanceRepositoryImpl(
     override suspend fun getCurrentBalance(): BigDecimal = cashDao.getCurrentBalance()
     override suspend fun getTotalIncomeAllTime(): BigDecimal = paymentDao.getTotalIncomeAllTime()
     override suspend fun getTotalExpenseAllTime(): BigDecimal = expenseDao.getTotalExpenseAllTime()
-    override suspend fun getNetCashBetween(start: Long, end: Long): BigDecimal = cashDao.getNetCashBetween(start, end)
+    override suspend fun getNetCashBetween(start: Long, end: Long): BigDecimal =
+        cashDao.getNetCashBetween(start, end)
 }

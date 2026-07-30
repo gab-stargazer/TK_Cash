@@ -21,6 +21,9 @@ interface StudentDao {
     @Query("SELECT * FROM students WHERE is_graduated = 0 ORDER BY name ASC")
     fun getAllActive(): Flow<List<Student>>
 
+    @Query("SELECT * FROM students WHERE is_graduated = 1 ORDER BY updated_at DESC")
+    fun getAllGraduated(): Flow<List<Student>>
+
     @Query("SELECT id FROM students WHERE is_graduated = 0")
     suspend fun getNonGraduatedIds(): List<Long>
 
@@ -30,8 +33,8 @@ interface StudentDao {
     @Query("UPDATE students SET is_graduated = 1, updated_at = :updatedAt WHERE id IN (:studentIds) AND is_graduated = 0")
     suspend fun graduateStudents(studentIds: List<Long>, updatedAt: Long): Int
 
-    @Query("SELECT * FROM students WHERE name LIKE '%' || :query || '%' ORDER BY name ASC")
-    fun search(query: String): Flow<List<Student>>
+    @Query("SELECT * FROM students WHERE name LIKE '%' || :query || '%' AND is_graduated = :isGraduated ORDER BY name ASC")
+    fun search(query: String, isGraduated: Boolean): Flow<List<Student>>
 
     @Query("SELECT * FROM students WHERE id = :studentId")
     fun readById(studentId: Long): Flow<Student>

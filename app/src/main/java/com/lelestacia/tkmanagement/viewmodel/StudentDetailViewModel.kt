@@ -2,9 +2,9 @@ package com.lelestacia.tkmanagement.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.lelestacia.tkmanagement.data.model.Payment
 import com.lelestacia.tkmanagement.data.model.Student
 import com.lelestacia.tkmanagement.data.relation.FeeProgress
+import com.lelestacia.tkmanagement.data.relation.PaymentWithFee
 import com.lelestacia.tkmanagement.data.repository.FeeRepository
 import com.lelestacia.tkmanagement.data.repository.FinanceRepository
 import com.lelestacia.tkmanagement.data.repository.GraduateResult
@@ -19,7 +19,7 @@ data class StudentDetailUiState(
     val isLoading: Boolean = true,
     val student: Student? = null,
     val fees: List<FeeProgress> = emptyList(),
-    val payments: List<Payment> = emptyList(),
+    val payments: List<PaymentWithFee> = emptyList(),
     val hasOutstandingFees: Boolean = false,
     val graduationMessage: String? = null
 )
@@ -77,7 +77,7 @@ class StudentDetailViewModel(
         }
 
         viewModelScope.launch {
-            financeRepository.readPaymentsForStudentById(studentId).collectLatest { payments ->
+            financeRepository.readPaymentsWithFeeForStudentById(studentId).collectLatest { payments ->
                 _uiState.value = _uiState.value.copy(payments = payments)
             }
         }

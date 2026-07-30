@@ -18,7 +18,8 @@ sealed class GraduateResult {
 
 interface StudentRepository {
     fun getActiveStudents(): Flow<List<Student>>
-    fun searchStudents(query: String): Flow<List<Student>>
+    fun getGraduatedStudents(): Flow<List<Student>>
+    fun searchStudents(query: String, isGraduated: Boolean): Flow<List<Student>>
     fun readStudentDataById(id: Long): Flow<Student>
     suspend fun addStudent(student: Student, isAlumniFamily: Boolean): Long
     suspend fun updateStudent(student: Student)
@@ -36,7 +37,10 @@ class StudentRepositoryImpl(
     private val feeDao: FeeDao
 ) : StudentRepository {
     override fun getActiveStudents(): Flow<List<Student>> = studentDao.getAllActive()
-    override fun searchStudents(query: String): Flow<List<Student>> = studentDao.search(query)
+    override fun getGraduatedStudents(): Flow<List<Student>> = studentDao.getAllGraduated()
+    override fun searchStudents(query: String, isGraduated: Boolean): Flow<List<Student>> =
+        studentDao.search(query, isGraduated)
+
     override fun readStudentDataById(id: Long): Flow<Student> = studentDao.readById(id)
     override suspend fun getStudentWithFees(id: Long): StudentWithFees? = studentDao.getWithFees(id)
     override suspend fun getStudentWithPayments(id: Long): StudentWithPayments? = studentDao.getWithPayments(id)

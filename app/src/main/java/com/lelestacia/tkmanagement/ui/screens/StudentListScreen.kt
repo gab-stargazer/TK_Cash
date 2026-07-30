@@ -1,8 +1,12 @@
 package com.lelestacia.tkmanagement.ui.screens
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
@@ -10,13 +14,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -27,6 +25,7 @@ import com.lelestacia.tkmanagement.ui.theme.TkCashTheme
 import com.lelestacia.tkmanagement.viewmodel.StudentListUiEvent
 import com.lelestacia.tkmanagement.viewmodel.StudentListUiState
 import com.lelestacia.tkmanagement.viewmodel.StudentListViewModel
+import kotlinx.coroutines.launch
 
 @Composable
 fun StudentListScreen(
@@ -46,7 +45,7 @@ fun StudentListScreen(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 private fun StudentListContent(
     uiState: StudentListUiState,
@@ -55,6 +54,8 @@ private fun StudentListContent(
     onAddStudent: () -> Unit,
     onBack: () -> Unit
 ) {
+    val pagerState = rememberPagerState(pageCount = { 2 })
+    val scope = rememberCoroutineScope()
     val isSelectionMode = uiState.selectedIds.isNotEmpty()
     var showConfirm by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
@@ -66,12 +67,22 @@ private fun StudentListContent(
         }
     }
 
+    // Force clear selection if navigating away from Active tab
+    LaunchedEffect(pagerState.currentPage) {
+        if (pagerState.currentPage != 0 && isSelectionMode) {
+            onEvent(StudentListUiEvent.ClearSelection)
+        }
+    }
+
     if (showConfirm) {
         AlertDialog(
             onDismissRequest = { showConfirm = false },
             title = { Text("Luluskan murid?") },
             text = {
-                Text("${uiState.selectedIds.size} murid akan ditandai lulus. Tindakan ini tidak dapat dibatalkan.")
+                Text(
+                    "Murid yang dipilih akan ditandai lulus. " +
+                            "Hanya murid dengan tagihan lunas yang dapat diluluskan."
+                )
             },
             confirmButton = {
                 TextButton(onClick = {
@@ -117,7 +128,7 @@ private fun StudentListContent(
             )
         },
         floatingActionButton = {
-            if (!isSelectionMode) {
+            if (!isSelectionMode && pagerState.currentPage == 0) {
                 ExtendedFloatingActionButton(
                     onClick = onAddStudent,
                     icon = { Icon(Icons.Default.Add, null) },
@@ -129,7 +140,7 @@ private fun StudentListContent(
             if (isSelectionMode) {
                 BottomAppBar(
                     actions = {
-                        TextButton(onClick = { onEvent(StudentListUiEvent.SelectAll(uiState.students.map { it.id })) }) {
+                        TextButton(onClick = { onEvent(StudentListUiEvent.SelectAll(uiState.activeStudents.map { it.id })) }) {
                             Text("Pilih Semua")
                         }
                     }
@@ -144,27 +155,53 @@ private fun StudentListContent(
                     onValueChange = { onEvent(StudentListUiEvent.QueryChange(it)) },
                     label = { Text("Cari nama murid") },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth().padding(16.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
                 )
+
+                SecondaryTabRow(selectedTabIndex = pagerState.currentPage) {
+                    Tab(
+                        selected = pagerState.currentPage == 0,
+                        onClick = { scope.launch { pagerState.animateScrollToPage(0) } },
+                        text = { Text("Aktif") }
+                    )
+                    Tab(
+                        selected = pagerState.currentPage == 1,
+                        onClick = { scope.launch { pagerState.animateScrollToPage(1) } },
+                        text = { Text("Lulus") }
+                    )
+                }
             }
 
-            if (uiState.students.isEmpty()) {
-                Text(
-                    "Belum ada murid. Tap tombol di bawah untuk menambahkan.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(16.dp)
-                )
-            } else {
-                LazyColumn(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)) {
-                    items(uiState.students, key = { it.id }) { student ->
-                        StudentRow(
-                            student = student,
-                            isSelected = student.id in uiState.selectedIds,
-                            isSelectionMode = isSelectionMode,
-                            onToggle = { onEvent(StudentListUiEvent.ToggleSelection(student.id)) },
-                            onOpen = { onOpenStudent(student.id) }
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxWidth().weight(1f)
+            ) { page ->
+                val students = if (page == 0) uiState.activeStudents else uiState.graduatedStudents
+                
+                if (students.isEmpty()) {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(
+                            text = if (page == 0) "Belum ada murid aktif." else "Belum ada murid lulus.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                    ) {
+                        items(students, key = { it.id }) { student ->
+                            StudentRow(
+                                student = student,
+                                isSelected = student.id in uiState.selectedIds,
+                                isSelectionMode = isSelectionMode,
+                                onToggle = { onEvent(StudentListUiEvent.ToggleSelection(student.id)) },
+                                onOpen = { onOpenStudent(student.id) }
+                            )
+                        }
                     }
                 }
             }
@@ -172,6 +209,7 @@ private fun StudentListContent(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun StudentRow(
     student: Student,
@@ -189,11 +227,12 @@ private fun StudentRow(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = containerColor),
-        onClick = {
-            if (isSelectionMode) onToggle() else onOpen()
-        }
+            .padding(vertical = 4.dp)
+            .combinedClickable(
+                onClick = { if (isSelectionMode) onToggle() else onOpen() },
+                onLongClick = { onToggle() }
+            ),
+        colors = CardDefaults.cardColors(containerColor = containerColor)
     ) {
         Row(
             Modifier.fillMaxWidth().padding(14.dp),
@@ -228,9 +267,25 @@ private fun StudentListPreview() {
     TkCashTheme {
         StudentListContent(
             uiState = StudentListUiState(
-                students = listOf(
-                    Student(id = 1, name = "Kamil", guardianName = "Wali Kamil", whatsappNumber = "08123456789", uniformShirtSize = "M", uniformPantsOrSkirtSize = "M"),
-                    Student(id = 2, name = "Ahmad", guardianName = "Wali Ahmad", whatsappNumber = "08123456780", uniformShirtSize = "L", uniformPantsOrSkirtSize = "L")
+                activeStudents = listOf(
+                    Student(
+                        id = 1,
+                        name = "Kamil (Aktif)",
+                        guardianName = "Wali Kamil",
+                        whatsappNumber = "08123456789",
+                        uniformShirtSize = "M",
+                        uniformPantsOrSkirtSize = "M"
+                    )
+                ),
+                graduatedStudents = listOf(
+                    Student(
+                        id = 2,
+                        name = "Ahmad (Lulus)",
+                        guardianName = "Wali Ahmad",
+                        whatsappNumber = "08123456780",
+                        uniformShirtSize = "L",
+                        uniformPantsOrSkirtSize = "L"
+                    )
                 )
             ),
             onEvent = {},
