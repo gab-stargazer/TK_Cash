@@ -1,0 +1,52 @@
+name: Android Release Build
+
+on:
+  push:
+    branches: [master, staging]
+  workflow_dispatch:
+
+jobs:
+  build-release-aab:
+    name: Build Release AAB
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Decode signing keystore
+        shell: bash
+        run: |
+          B64="${{ secrets.KEYSTORE_BASE64 }}"
+          if [ -z "$B64" ]; then
+            echo "::error::Secret KEYSTORE_BASE64 is empty or not set — add it in repo Settings → Secrets and variables → Actions"
+            exit 1
+          fi
+          # Base64 of the keystore file (single-line) → PKCS12 .jks on the runner.
+          printf '%s' "$B64" | base64 -d > "$RUNNER_TEMP/tk-release.jks"
+          echo "KEYSTORE_PATH=$RUNNER_TEMP/tk-release.jks" >> "$GITHUB_ENV"
+          echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> "$GITHUB_ENV"
+          echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> "$GITHUB_ENV"
+          echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> "$GITHUB_ENV"
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build release AAB
+        shell: bash
+        run: ./gradlew :app:bundleRelease --no-daemon
+
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: app-release-aab
+          path: app/build/outputs/bundle/release/*.aab
+          if-no-files-found: error
