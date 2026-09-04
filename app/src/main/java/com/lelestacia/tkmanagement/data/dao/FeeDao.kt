@@ -8,8 +8,10 @@ import com.lelestacia.tkmanagement.data.model.StudentFee
 import com.lelestacia.tkmanagement.data.relation.TunggakanItem
 import kotlinx.coroutines.flow.Flow
 
+/** DAO penyimpanan tagihan murid dan perhitungan sisa pembayaran. */
 @Dao
 interface FeeDao {
+    /** Menyimpan satu tagihan murid dan mengembalikan ID barunya. */
     @Insert
     suspend fun insert(fee: StudentFee): Long
 

@@ -2,8 +2,7 @@ package com.lelestacia.tkmanagement.data.relation
 
 import java.math.BigDecimal
 
-/**
- * Hasil query gabungan student_fees + SUM(payments) untuk daftar tunggakan.
+/** Satu baris tunggakan hasil gabungan tagihan, pembayaran, dan data murid.
  * remaining = totalAmount - paidAmount, hanya baris dengan remaining > 0 yang relevan.
  */
 data class TunggakanItem(

@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.lelestacia.tkmanagement.data.model.UniformStatus
 import com.lelestacia.tkmanagement.ui.theme.MoneyOut
 import com.lelestacia.tkmanagement.ui.theme.TkCashTheme
 import com.lelestacia.tkmanagement.viewmodel.AddStudentUiEvent
@@ -116,6 +117,36 @@ private fun AddStudentContent(
                     isError = state.uniformPantsOrSkirtSize.isBlank() && state.error != null,
                     modifier = Modifier.weight(1f)
                 )
+            }
+
+            OutlinedTextField(
+                value = state.uniformShoeSize,
+                onValueChange = { onEvent(AddStudentUiEvent.UpdateUniformShoeSize(it)) },
+                label = { Text("Ukuran Sepatu (opsional)") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Text("Status Penerimaan Seragam", style = MaterialTheme.typography.titleMedium)
+            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+                SegmentedButton(
+                    selected = state.uniformStatus == UniformStatus.BELUM_DIAMBIL,
+                    onClick = {
+                        onEvent(AddStudentUiEvent.UpdateUniformStatus(UniformStatus.BELUM_DIAMBIL))
+                    },
+                    shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
+                ) {
+                    Text("Belum Diambil")
+                }
+                SegmentedButton(
+                    selected = state.uniformStatus == UniformStatus.SUDAH_DIAMBIL,
+                    onClick = {
+                        onEvent(AddStudentUiEvent.UpdateUniformStatus(UniformStatus.SUDAH_DIAMBIL))
+                    },
+                    shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
+                ) {
+                    Text("Sudah Diambil")
+                }
             }
 
             Row(

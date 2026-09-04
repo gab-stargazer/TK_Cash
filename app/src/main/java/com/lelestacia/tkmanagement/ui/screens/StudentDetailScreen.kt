@@ -14,7 +14,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -23,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import com.lelestacia.tkmanagement.data.model.FeeType
 import com.lelestacia.tkmanagement.data.model.Payment
 import com.lelestacia.tkmanagement.data.model.Student
+import com.lelestacia.tkmanagement.data.model.UniformStatus
 import com.lelestacia.tkmanagement.data.relation.FeeProgress
 import com.lelestacia.tkmanagement.data.relation.PaymentWithFee
 import com.lelestacia.tkmanagement.ui.components.LunasChip
@@ -70,6 +74,7 @@ private fun StudentDetailContent(
 ) {
     val pagerState = rememberPagerState(pageCount = { 2 })
     val coroutineScope = rememberCoroutineScope()
+    var showUniformConfirm by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -150,9 +155,47 @@ private fun StudentDetailContent(
                         }
 
                         Text(
-                            "Seragam: ${s.uniformShirtSize} / ${s.uniformPantsOrSkirtSize}",
+                            "Seragam: ${
+                                listOfNotNull(
+                                    s.uniformShirtSize,
+                                    s.uniformPantsOrSkirtSize,
+                                    s.uniformShoeSize
+                                ).joinToString(" / ")
+                            }",
                             style = MaterialTheme.typography.bodyMedium
                         )
+                        val uniformTaken = s.uniformStatus == UniformStatus.SUDAH_DIAMBIL
+                                                Text(
+                                                    "Penerimaan Seragam",
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    modifier = Modifier.padding(top = 8.dp)
+                                                )
+                                                if (uniformTaken) {
+                                                    Row(
+                                                        verticalAlignment = Alignment.CenterVertically,
+                                                        modifier = Modifier.padding(top = 4.dp)
+                                                    ) {
+                                                        Surface(
+                                                            shape = MaterialTheme.shapes.small,
+                                                            color = MaterialTheme.colorScheme.primaryContainer,
+                                                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                                        ) {
+                                                            Text(
+                                                                "Sudah Diambil",
+                                                                style = MaterialTheme.typography.labelLarge,
+                                                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                                            )
+                                                        }
+                                                    }
+                                                } else {
+                                                    OutlinedButton(
+                                                        onClick = { showUniformConfirm = true },
+                                                        border = BorderStroke(2.dp, MaterialTheme.colorScheme.primary),
+                                                        modifier = Modifier.padding(top = 4.dp)
+                                                    ) {
+                                                        Text("Tandai Sudah Diambil")
+                                                    }
+                                                }
 
                         Spacer(Modifier.height(16.dp))
                         Row(
@@ -198,34 +241,57 @@ private fun StudentDetailContent(
             }
 
             // TabRow
-            SecondaryTabRow(selectedTabIndex = pagerState.currentPage) {
-                Tab(
-                    selected = pagerState.currentPage == 0,
-                    onClick = { coroutineScope.launch { pagerState.animateScrollToPage(0) } },
-                    text = { Text("Tagihan") }
-                )
-                Tab(
-                    selected = pagerState.currentPage == 1,
-                    onClick = { coroutineScope.launch { pagerState.animateScrollToPage(1) } },
-                    text = { Text("Pembayaran") }
-                )
-            }
+                        SecondaryTabRow(selectedTabIndex = pagerState.currentPage) {
+                            Tab(
+                                selected = pagerState.currentPage == 0,
+                                onClick = { coroutineScope.launch { pagerState.animateScrollToPage(0) } },
+                                text = { Text("Tagihan") }
+                            )
+                            Tab(
+                                selected = pagerState.currentPage == 1,
+                                onClick = { coroutineScope.launch { pagerState.animateScrollToPage(1) } },
+                                text = { Text("Riwayat Pembayaran") }
+                            )
+                        }
 
-            // Pager
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-            ) { page ->
-                when (page) {
-                    0 -> FeeListPage(state, onAddFee, onAddPayment, onOpenReceipt)
-                    1 -> PaymentHistoryPage(state)
+                        // Pager
+                        HorizontalPager(
+                            state = pagerState,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                        ) { page ->
+                            when (page) {
+                                0 -> FeeListPage(state, onAddFee, onAddPayment, onOpenReceipt)
+                                1 -> PaymentHistoryPage(state)
+                            }
+                        }
+
+                        if (showUniformConfirm) {
+                            AlertDialog(
+                                onDismissRequest = { showUniformConfirm = false },
+                                title = { Text("Tandai Seragam Sudah Diambil?") },
+                                text = { Text("Tindakan ini tidak dapat dibatalkan.") },
+                                confirmButton = {
+                                    TextButton(
+                                        onClick = {
+                                            showUniformConfirm = false
+                                            onEvent(StudentDetailUiEvent.MarkUniformTaken)
+                                        }
+                                    ) {
+                                        Text("Ya, Tandai")
+                                    }
+                                },
+                                dismissButton = {
+                                    TextButton(onClick = { showUniformConfirm = false }) {
+                                        Text("Batal")
+                                    }
+                                }
+                            )
+                        }
+                    }
                 }
             }
-        }
-    }
-}
 
 @Composable
 private fun FeeListPage(
@@ -349,24 +415,30 @@ private fun FeeListPage(
 }
 
 @Composable
-private fun PaymentHistoryPage(state: StudentDetailUiState) {
+private fun PaymentHistoryPage(
+    state: StudentDetailUiState
+) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(16.dp),
+        contentPadding = PaddingValues(
+            top = 12.dp, bottom = 16.dp, start = 12.dp, end = 12.dp
+        ),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         if (state.payments.isEmpty()) {
             item {
                 Text(
-                    "Belum ada riwayat pembayaran.",
+                    "Belum ada riwayat pembayaran untuk murid ini.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-        } else {
-            items(state.payments, key = { it.payment.id }) { item ->
-                Row(
-                    Modifier
+            return@LazyColumn
+        }
+
+        items(state.payments, key = { "pmt_${it.payment.id}" }) { item ->
+                    Row(
+                        Modifier
                         .fillMaxWidth()
                         .padding(vertical = 4.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
@@ -387,12 +459,11 @@ private fun PaymentHistoryPage(state: StudentDetailUiState) {
                     MoneyText(item.payment.amount, small = true)
                 }
                 HorizontalDivider()
-            }
-        }
-    }
-}
+                            }
+                    }
+                }
 
-@Preview(showBackground = true)
+                @Preview(showBackground = true)
 @Composable
 private fun StudentDetailPreview() {
     TkCashTheme {

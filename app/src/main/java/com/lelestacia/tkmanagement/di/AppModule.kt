@@ -1,11 +1,13 @@
 package com.lelestacia.tkmanagement.di
 
+import androidx.room.Room
 import com.lelestacia.tkmanagement.data.AppDatabase
 import com.lelestacia.tkmanagement.data.repository.*
 import com.lelestacia.tkmanagement.ui.navigation.Destination
 import com.lelestacia.tkmanagement.ui.navigation.Navigator
 import com.lelestacia.tkmanagement.ui.screens.*
 import com.lelestacia.tkmanagement.viewmodel.*
+import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.scope.dsl.activityRetainedScope
 import org.koin.core.annotation.KoinExperimentalAPI
 import org.koin.core.module.dsl.viewModel
@@ -16,8 +18,17 @@ import org.koin.dsl.navigation3.navigation
 
 @OptIn(KoinExperimentalAPI::class)
 val appModule = module {
-    // Database
-    single { AppDatabase.getInstance(get()) }
+    // Database (Koin-owned construction — no manual singleton)
+    single {
+        Room.databaseBuilder(
+            androidContext(),
+            AppDatabase::class.java,
+            "lelestacia.db"
+        )
+            .addMigrations(AppDatabase.MIGRATION_1_2)
+            .fallbackToDestructiveMigration(true)
+            .build()
+    }
 
     // DAOs
     single { get<AppDatabase>().studentDao() }

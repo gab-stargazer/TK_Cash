@@ -16,6 +16,7 @@ sealed class GraduateResult {
     data class Skipped(val skippedIds: List<Long>) : GraduateResult()
 }
 
+/** Sumber data murid dan tagihannya; abstraksi di atas DAO murid dan tagihan. */
 interface StudentRepository {
     fun getActiveStudents(): Flow<List<Student>>
     fun getGraduatedStudents(): Flow<List<Student>>
@@ -32,6 +33,7 @@ interface StudentRepository {
     suspend fun getNonGraduatedStudentIds(): List<Long>
 }
 
+/** Implementasi [StudentRepository] yang menggabungkan aturan bisnis kelulusan dan tagihan default. */
 class StudentRepositoryImpl(
     private val studentDao: StudentDao,
     private val feeDao: FeeDao

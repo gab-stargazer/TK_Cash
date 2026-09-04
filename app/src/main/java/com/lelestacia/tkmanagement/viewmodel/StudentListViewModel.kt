@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+/** Event UI untuk layar daftar murid. */
 sealed interface StudentListUiEvent {
     data class QueryChange(val query: String) : StudentListUiEvent
     data class ToggleSelection(val studentId: Long) : StudentListUiEvent
@@ -24,6 +25,7 @@ sealed interface StudentListUiEvent {
     data object DismissMessage : StudentListUiEvent
 }
 
+/** State layar daftar murid aktif dan alumni. */
 data class StudentListUiState(
     val activeStudents: List<Student> = emptyList(),
     val graduatedStudents: List<Student> = emptyList(),
@@ -32,6 +34,7 @@ data class StudentListUiState(
     val message: String? = null
 )
 
+/** ViewModel daftar murid: mencari, memilih, dan meluluskan murid. */
 class StudentListViewModel(private val repository: StudentRepository) : ViewModel() {
 
     private val query = MutableStateFlow("")

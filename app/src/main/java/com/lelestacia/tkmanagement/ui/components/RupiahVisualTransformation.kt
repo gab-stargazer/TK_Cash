@@ -7,7 +7,9 @@ import androidx.compose.ui.text.input.VisualTransformation
 import java.text.NumberFormat
 import java.util.Locale
 
+/** VisualTransformation yang menampilkan input digit sebagai format Rupiah (mis. "Rp 1.500.000"). */
 class RupiahVisualTransformation : VisualTransformation {
+    /** Memformat teks digit menjadi "Rp <angka>" sambil menjaga offset kursor tetap mengarah ke digit yang tepat. */
     override fun filter(text: AnnotatedString): TransformedText {
         val originalText = text.text
         if (originalText.isEmpty()) {
@@ -25,10 +27,11 @@ class RupiahVisualTransformation : VisualTransformation {
         val out = "Rp $formatted"
 
         val offsetMapping = object : OffsetMapping {
+            /** Memetakan offset teks asli (digit) ke offset teks terformat. */
             override fun originalToTransformed(offset: Int): Int {
                 // Number of digits in original text before this offset
                 val digitsBefore = originalText.take(offset).length
-                
+
                 // Find the position in 'formatted' that contains exactly 'digitsBefore' digits
                 var digitsFound = 0
                 var transformedOffset = 0
@@ -39,14 +42,15 @@ class RupiahVisualTransformation : VisualTransformation {
                     transformedOffset++
                     if (digitsFound == digitsBefore) break
                 }
-                
-                // If originalText has leading zeros that were stripped by format(), 
+
+                // If originalText has leading zeros that were stripped by format(),
                 // they all map to the first digit of formatted.
                 // But since we filter for digits and toLongOrNull(), let's simplify.
-                
+
                 return transformedOffset + 3 // +3 for "Rp "
             }
 
+            /** Memetakan offset teks terformat kembali ke offset digit asli. */
             override fun transformedToOriginal(offset: Int): Int {
                 if (offset <= 3) return 0
                 val transformedOffset = (offset - 3).coerceAtMost(formatted.length)

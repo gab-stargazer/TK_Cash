@@ -1,3 +1,4 @@
+import java.util.Properties
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -5,6 +6,26 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.room)
 }
+
+//  Release signing — the keystore is NEVER committed.
+//  Local: keystore.properties at repo root (gitignored). CI: env vars
+//  KEYSTORE_PATH / KEYSTORE_PASSWORD / KEY_ALIAS / KEY_PASSWORD.
+val keystoreProps = Properties()
+val keystorePropsFile = rootProject.file("keystore.properties")
+if (keystorePropsFile.exists()) {
+    keystorePropsFile.inputStream().use { stream -> keystoreProps.load(stream) }
+}
+
+fun signingValue(propName: String, envName: String): String? {
+    val fromProps = keystoreProps.getProperty(propName)
+    return if (!fromProps.isNullOrBlank()) fromProps else System.getenv(envName)
+}
+
+val releaseStoreFile = signingValue("storeFile", "KEYSTORE_PATH")?.let { rootProject.file(it) }
+val hasReleaseSigning = releaseStoreFile?.isFile == true &&
+    signingValue("storePassword", "KEYSTORE_PASSWORD") != null &&
+    signingValue("keyAlias", "KEY_ALIAS") != null &&
+    signingValue("keyPassword", "KEY_PASSWORD") != null
 
 android {
     namespace = "com.lelestacia.tkmanagement"
@@ -20,10 +41,26 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile = releaseStoreFile
+                storePassword = signingValue("storePassword", "KEYSTORE_PASSWORD")
+                keyAlias = signingValue("keyAlias", "KEY_ALIAS")
+                keyPassword = signingValue("keyPassword", "KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
             optimization {
                 enable = false
+            }
+            //  Signed only when a keystore is available (local keystore.properties
+            //  or CI env vars); otherwise release builds stay unsigned.
+            if (hasReleaseSigning) {
+                signingConfig = signingConfigs.getByName("release")
             }
         }
     }

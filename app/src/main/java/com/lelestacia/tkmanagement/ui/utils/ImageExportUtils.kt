@@ -8,8 +8,10 @@ import android.os.Build
 import android.provider.MediaStore
 import java.io.OutputStream
 
+/** Utilitas penyimpanan bitmap ke galeri perangkat. */
 object ImageExportUtils {
 
+    /** Menyimpan bitmap PNG ke galeri dan mengembalikan Uri hasilnya, atau null jika gagal. */
     fun saveBitmapToGallery(context: Context, bitmap: Bitmap, fileName: String): Uri? {
         val resolver = context.contentResolver
         val contentValues = ContentValues().apply {

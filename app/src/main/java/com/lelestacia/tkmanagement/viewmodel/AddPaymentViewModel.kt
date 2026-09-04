@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
 
+/** State layar tambah pembayaran. */
 data class AddPaymentUiState(
     val studentId: Long = 0,
     val studentName: String = "",
@@ -27,6 +28,7 @@ data class AddPaymentUiState(
     val saved: Boolean = false
 )
 
+/** Event UI untuk layar tambah pembayaran. */
 sealed interface AddPaymentUiEvent {
     data class SelectFee(val feeId: Long?) : AddPaymentUiEvent
     data class AmountChange(val value: String) : AddPaymentUiEvent
@@ -34,6 +36,7 @@ sealed interface AddPaymentUiEvent {
     object Save : AddPaymentUiEvent
 }
 
+/** ViewModel tambah pembayaran: memilih tagihan, memvalidasi nominal, dan menyimpan pembayaran. */
 class AddPaymentViewModel(
     private val financeRepository: FinanceRepository,
     private val feeRepository: FeeRepository,

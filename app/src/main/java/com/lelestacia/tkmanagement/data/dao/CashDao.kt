@@ -19,6 +19,7 @@ interface CashDao {
         AS TEXT)
         """
     )
+    /** Saldo kas saat ini = total pemasukan dikurangi total pengeluaran. */
     suspend fun getCurrentBalance(): BigDecimal
 
     @Query(
@@ -29,5 +30,6 @@ interface CashDao {
         AS TEXT)
         """
     )
+    /** Arus kas bersih (pemasukan - pengeluaran) pada rentang waktu (epoch ms). */
     suspend fun getNetCashBetween(start: Long, end: Long): BigDecimal
 }

@@ -12,6 +12,7 @@ import androidx.compose.ui.unit.dp
 import com.lelestacia.tkmanagement.ui.theme.AlertAmber
 import com.lelestacia.tkmanagement.ui.theme.MoneyIn
 
+/** Chip status kecil berwarna sesuai [tone], dengan latar transparan dan teks label. */
 @Composable
 fun StatusChip(label: String, tone: Color, modifier: Modifier = Modifier) {
     Text(
@@ -24,8 +25,10 @@ fun StatusChip(label: String, tone: Color, modifier: Modifier = Modifier) {
     )
 }
 
+/** Chip status "LUNAS" berwarna hijau. */
 @Composable
 fun LunasChip(modifier: Modifier = Modifier) = StatusChip("LUNAS", MoneyIn, modifier)
 
+/** Chip status "BELUM LUNAS" berwarna amber. */
 @Composable
 fun TunggakanChip(modifier: Modifier = Modifier) = StatusChip("BELUM LUNAS", AlertAmber, modifier)

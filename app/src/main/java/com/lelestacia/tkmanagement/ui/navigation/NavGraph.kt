@@ -13,6 +13,7 @@ import kotlinx.serialization.Serializable
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.ui.Modifier
 
+/** Tujuan navigasi aplikasi. */
 sealed interface Destination {
     @Serializable object Dashboard : Destination
     @Serializable object StudentList : Destination
@@ -27,6 +28,7 @@ sealed interface Destination {
     @Serializable data class FullReceipt(val studentId: Long) : Destination
 }
 
+/** Stack navigasi sederhana untuk NavDisplay. */
 class Navigator(startDestination: Destination) {
     val backStack: SnapshotStateList<Any> = mutableStateListOf(startDestination)
 
@@ -46,6 +48,7 @@ class Navigator(startDestination: Destination) {
 }
 
 @Composable
+/** Host navigasi utama aplikasi TKManagement. */
 fun TkCashNavGraph(
     navigator: Navigator,
     entryProvider: (Any) -> NavEntry<Any>

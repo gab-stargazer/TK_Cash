@@ -6,6 +6,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
+/** Tipografi default aplikasi. */
 val AppTypography = Typography()
 
 /**
@@ -20,4 +21,5 @@ val MoneyTextStyle = TextStyle(
     letterSpacing = 0.sp
 )
 
+/** Varian [MoneyTextStyle] yang lebih kecil untuk nominal ringkas. */
 val MoneyTextStyleSmall = MoneyTextStyle.copy(fontSize = 14.sp, fontWeight = FontWeight.Medium)

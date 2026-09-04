@@ -10,9 +10,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
+/**
+ * ViewModel daftar tunggakan: memuat daftar tunggakan dari [FeeRepository]
+ * dan mengeksposnya sebagai [StateFlow] untuk layar Tunggakan.
+ */
 class TunggakanViewModel(private val repository: FeeRepository) : ViewModel() {
 
     private val _list = MutableStateFlow<List<TunggakanItem>>(emptyList())
+    /** Daftar tunggakan terbaru dari repository. */
     val list: StateFlow<List<TunggakanItem>> = _list.asStateFlow()
 
     init {

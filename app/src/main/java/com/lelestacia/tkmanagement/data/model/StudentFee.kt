@@ -31,23 +31,33 @@ import kotlin.time.ExperimentalTime
     ],
     indices = [Index("student_id")]
 )
+/** Tagihan milik satu murid. */
 data class StudentFee(
+    /** ID unik, dibuat otomatis. */
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
+    /** ID murid pemilik tagihan. */
     @ColumnInfo(name = "student_id")
     val studentId: Long,
+    /** Jenis tagihan. */
     @ColumnInfo(name = "fee_type")
     val feeType: FeeType,
+    /** Label tagihan (mis. "SPP Juli 2026"). */
     @ColumnInfo(name = "label")
     val label: String,
+    /** Nilai total tagihan. */
     @ColumnInfo(name = "total_amount")
     val totalAmount: BigDecimal,
+    /** Catatan opsional. */
     @ColumnInfo(name = "note")
     val note: String? = null,
+    /** Batas akhir pembayaran, opsional. */
     @ColumnInfo(name = "due_date")
     val dueDate: Long? = null,
+    /** Waktu pembuatan tagihan (epoch ms). */
     @ColumnInfo(name = "created_at")
     val createdAt: Long = Clock.System.now().toEpochMilliseconds(),
+    /** Waktu pembaruan terakhir, null bila belum pernah diubah. */
     @ColumnInfo(name = "updated_at")
     val updatedAt: Long? = null
 )

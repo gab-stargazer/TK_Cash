@@ -20,6 +20,7 @@ import com.lelestacia.tkmanagement.viewmodel.AddExpenseUiState
 import com.lelestacia.tkmanagement.viewmodel.AddExpenseViewModel
 
 @Composable
+/** Layar untuk mencatat pengeluaran sekolah baru. */
 fun AddExpenseScreen(
     viewModel: AddExpenseViewModel,
     onSaved: () -> Unit,

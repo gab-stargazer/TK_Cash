@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
 
+/** State layar catat pengeluaran. */
 data class AddExpenseUiState(
     val category: ExpenseCategory = ExpenseCategory.ATK,
     val amountInput: String = "",
@@ -20,6 +21,7 @@ data class AddExpenseUiState(
     val saved: Boolean = false
 )
 
+/** Event UI untuk layar catat pengeluaran. */
 sealed interface AddExpenseUiEvent {
     data class CategoryChange(val category: ExpenseCategory) : AddExpenseUiEvent
     data class AmountChange(val value: String) : AddExpenseUiEvent
@@ -27,6 +29,7 @@ sealed interface AddExpenseUiEvent {
     object Save : AddExpenseUiEvent
 }
 
+/** ViewModel catat pengeluaran: memvalidasi input lalu menyimpan pengeluaran baru. */
 class AddExpenseViewModel(private val repository: FinanceRepository) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AddExpenseUiState())

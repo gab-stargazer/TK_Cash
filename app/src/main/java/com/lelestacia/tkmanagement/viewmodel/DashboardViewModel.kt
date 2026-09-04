@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
 
+/** State ringkas dashboard berisi saldo kas, total transaksi, dan tunggakan teratas. */
 data class DashboardUiState(
     val isLoading: Boolean = true,
     val saldoKas: BigDecimal = BigDecimal.ZERO,
@@ -20,10 +21,12 @@ data class DashboardUiState(
     val topTunggakan: List<TunggakanItem> = emptyList()
 )
 
+/** Event UI untuk dashboard. */
 sealed interface DashboardUiEvent {
     object Refresh : DashboardUiEvent
 }
 
+/** ViewModel dashboard: memuat ringkasan kas dan daftar tunggakan teratas. */
 class DashboardViewModel(
     private val financeRepository: FinanceRepository,
     private val feeRepository: FeeRepository

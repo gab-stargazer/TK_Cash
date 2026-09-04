@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+/** State layar tambah murid. */
 data class AddStudentUiState(
     val nis: String = "",
     val name: String = "",
@@ -17,6 +18,8 @@ data class AddStudentUiState(
     val whatsappNumber: String = "",
     val uniformShirtSize: String = "",
     val uniformPantsOrSkirtSize: String = "",
+    val uniformShoeSize: String = "",
+    val uniformStatus: UniformStatus = UniformStatus.BELUM_DIAMBIL,
     val isAlumniFamily: Boolean = false,
     val error: String? = null,
     val saved: Boolean = false,
@@ -30,6 +33,7 @@ data class AddStudentUiState(
             uniformPantsOrSkirtSize.isNotBlank()
 }
 
+/** Event UI untuk layar tambah murid. */
 sealed interface AddStudentUiEvent {
     data class UpdateNis(val value: String) : AddStudentUiEvent
     data class UpdateName(val value: String) : AddStudentUiEvent
@@ -37,10 +41,13 @@ sealed interface AddStudentUiEvent {
     data class UpdateWhatsappNumber(val value: String) : AddStudentUiEvent
     data class UpdateUniformShirtSize(val value: String) : AddStudentUiEvent
     data class UpdateUniformPantsOrSkirtSize(val value: String) : AddStudentUiEvent
+    data class UpdateUniformShoeSize(val value: String) : AddStudentUiEvent
+    data class UpdateUniformStatus(val status: UniformStatus) : AddStudentUiEvent
     data class UpdateAlumniStatus(val isAlumni: Boolean) : AddStudentUiEvent
     object Save : AddStudentUiEvent
 }
 
+/** ViewModel tambah murid: memvalidasi input lalu menyimpan murid baru beserta tagihan defaultnya. */
 class AddStudentViewModel(private val repository: StudentRepository) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AddStudentUiState())
@@ -54,6 +61,8 @@ class AddStudentViewModel(private val repository: StudentRepository) : ViewModel
             is AddStudentUiEvent.UpdateWhatsappNumber -> _uiState.value = _uiState.value.copy(whatsappNumber = event.value)
             is AddStudentUiEvent.UpdateUniformShirtSize -> _uiState.value = _uiState.value.copy(uniformShirtSize = event.value)
             is AddStudentUiEvent.UpdateUniformPantsOrSkirtSize -> _uiState.value = _uiState.value.copy(uniformPantsOrSkirtSize = event.value)
+            is AddStudentUiEvent.UpdateUniformShoeSize -> _uiState.value = _uiState.value.copy(uniformShoeSize = event.value)
+            is AddStudentUiEvent.UpdateUniformStatus -> _uiState.value = _uiState.value.copy(uniformStatus = event.status)
             is AddStudentUiEvent.UpdateAlumniStatus -> _uiState.value = _uiState.value.copy(isAlumniFamily = event.isAlumni)
             AddStudentUiEvent.Save -> save()
         }
@@ -84,7 +93,8 @@ class AddStudentViewModel(private val repository: StudentRepository) : ViewModel
                     whatsappNumber = state.whatsappNumber.trim(),
                     uniformShirtSize = state.uniformShirtSize.trim(),
                     uniformPantsOrSkirtSize = state.uniformPantsOrSkirtSize.trim(),
-                    uniformStatus = UniformStatus.BELUM_DIAMBIL,
+                    uniformShoeSize = state.uniformShoeSize.trim().ifBlank { null },
+                    uniformStatus = state.uniformStatus,
                 ),
                 isAlumniFamily = state.isAlumniFamily
             )

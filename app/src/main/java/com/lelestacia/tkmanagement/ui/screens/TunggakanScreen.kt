@@ -19,6 +19,7 @@ import com.lelestacia.tkmanagement.viewmodel.TunggakanViewModel
 import java.math.BigDecimal
 
 @Composable
+/** Layar daftar seluruh tunggakan dan pintu masuk ke detail murid. */
 fun TunggakanScreen(
     viewModel: TunggakanViewModel,
     onOpenStudent: (Long) -> Unit,

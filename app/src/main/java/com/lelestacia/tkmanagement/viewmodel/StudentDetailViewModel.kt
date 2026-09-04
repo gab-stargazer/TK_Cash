@@ -3,6 +3,7 @@ package com.lelestacia.tkmanagement.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lelestacia.tkmanagement.data.model.Student
+import com.lelestacia.tkmanagement.data.model.UniformStatus
 import com.lelestacia.tkmanagement.data.relation.FeeProgress
 import com.lelestacia.tkmanagement.data.relation.PaymentWithFee
 import com.lelestacia.tkmanagement.data.repository.FeeRepository
@@ -15,6 +16,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
+/** State layar detail murid, termasuk tagihan, pembayaran, dan status kelulusan. */
 data class StudentDetailUiState(
     val isLoading: Boolean = true,
     val student: Student? = null,
@@ -24,11 +26,14 @@ data class StudentDetailUiState(
     val graduationMessage: String? = null
 )
 
+/** Event UI untuk layar detail murid. */
 sealed interface StudentDetailUiEvent {
     data object Graduate : StudentDetailUiEvent
     data object DismissMessage : StudentDetailUiEvent
+    data object MarkUniformTaken : StudentDetailUiEvent
 }
 
+/** ViewModel detail murid: memuat profil, progres tagihan, riwayat pembayaran, dan aksi kelulusan. */
 class StudentDetailViewModel(
     private val studentRepository: StudentRepository,
     private val feeRepository: FeeRepository,
@@ -47,6 +52,7 @@ class StudentDetailViewModel(
         when (event) {
             StudentDetailUiEvent.Graduate -> graduate()
             StudentDetailUiEvent.DismissMessage -> _uiState.value = _uiState.value.copy(graduationMessage = null)
+            StudentDetailUiEvent.MarkUniformTaken -> markUniformTaken()
         }
     }
 
@@ -60,6 +66,15 @@ class StudentDetailViewModel(
                     graduationMessage = "Tidak bisa diluluskan: masih ada tagihan yang belum lunas."
                 )
             }
+        }
+    }
+
+    private fun markUniformTaken() {
+        val current = _uiState.value.student ?: return
+        // One-way irreversible transition: only BELUM_DIAMBIL -> SUDAH_DIAMBIL.
+        if (current.uniformStatus == UniformStatus.SUDAH_DIAMBIL) return
+        viewModelScope.launch {
+            studentRepository.updateStudent(current.copy(uniformStatus = UniformStatus.SUDAH_DIAMBIL))
         }
     }
 

@@ -17,9 +17,10 @@ import java.util.Locale
 
 private val idFormat = NumberFormat.getNumberInstance(Locale("in", "ID"))
 
-/** "1500000" -> "Rp1.500.000" */
+/** Memformat nominal menjadi Rupiah tanpa spasi, misalnya "Rp1.500.000". */
 fun formatRupiah(amount: BigDecimal): String = "Rp${idFormat.format(amount)}"
 
+/** Teks nominal dengan gaya uang masuk/keluar yang konsisten. */
 @Composable
 fun MoneyText(
     amount: BigDecimal,
