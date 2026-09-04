@@ -1,11 +1,10 @@
 package com.lelestacia.tkmanagement.data.model
 
-/**
- * Jenis tagihan / pemasukan.
+/** Jenis tagihan atau pemasukan sekolah.
  * PENDAFTARAN, SPP, SERAGAM, BUKU, KEGIATAN bisa dicicil (lihat StudentFee + Payment).
  */
 enum class FeeType {
-    PENDAFTARAN,
+    PEMBANGUNAN,
     SPP,
     SERAGAM,
     BUKU,

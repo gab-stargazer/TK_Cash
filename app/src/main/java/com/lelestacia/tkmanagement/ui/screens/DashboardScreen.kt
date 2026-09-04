@@ -15,12 +15,13 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -28,34 +29,69 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.lelestacia.tkmanagement.data.relation.TunggakanItem
 import com.lelestacia.tkmanagement.ui.components.MoneyText
 import com.lelestacia.tkmanagement.ui.theme.InkPaper
 import com.lelestacia.tkmanagement.ui.theme.MoneyIn
 import com.lelestacia.tkmanagement.ui.theme.MoneyOut
+import com.lelestacia.tkmanagement.ui.theme.TkCashTheme
+import com.lelestacia.tkmanagement.viewmodel.DashboardUiEvent
+import com.lelestacia.tkmanagement.viewmodel.DashboardUiState
 import com.lelestacia.tkmanagement.viewmodel.DashboardViewModel
+import java.math.BigDecimal
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
     viewModel: DashboardViewModel,
     onAddPayment: () -> Unit,
     onAddExpense: () -> Unit,
+    onAddBulkFee: () -> Unit,
     onOpenStudents: () -> Unit,
     onOpenTunggakan: () -> Unit
 ) {
     val state by viewModel.uiState.collectAsState()
 
-    LaunchedEffect(Unit) { viewModel.refresh() }
+    LaunchedEffect(Unit) { viewModel.onEvent(DashboardUiEvent.Refresh) }
 
+    DashboardContent(
+        state = state,
+        onAddPayment = onAddPayment,
+        onAddExpense = onAddExpense,
+        onAddBulkFee = onAddBulkFee,
+        onOpenStudents = onOpenStudents,
+        onOpenTunggakan = onOpenTunggakan
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DashboardContent(
+    state: DashboardUiState,
+    onAddPayment: () -> Unit,
+    onAddExpense: () -> Unit,
+    onAddBulkFee: () -> Unit,
+    onOpenStudents: () -> Unit,
+    onOpenTunggakan: () -> Unit
+) {
     Scaffold(
         containerColor = InkPaper,
         topBar = {
             TopAppBar(title = { Text("Kas TK", fontWeight = FontWeight.SemiBold) })
         },
         floatingActionButton = {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FloatingActionButton(onClick = onAddExpense) { Icon(Icons.Default.Add, contentDescription = "Catat Pengeluaran") }
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                ExtendedFloatingActionButton(
+                    onClick = onAddBulkFee,
+                    icon = { Icon(Icons.Default.Add, contentDescription = null) },
+                    text = { Text("Tagihan Masal") }
+                )
+                ExtendedFloatingActionButton(
+                    onClick = onAddExpense,
+                    icon = { Icon(Icons.Default.Add, contentDescription = null) },
+                    text = { Text("Catat Pengeluaran") }
+                )
             }
         }
     ) { padding ->
@@ -113,8 +149,15 @@ fun DashboardScreen(
                     Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Button(onClick = onAddPayment, modifier = Modifier.weight(1f)) { Text("Catat Pemasukan") }
-                    OutlinedButton(onClick = onOpenStudents, modifier = Modifier.weight(1f)) { Text("Data Murid") }
+                    Button(
+                        onClick = onAddPayment,
+                        modifier = Modifier.weight(1f)
+                    ) { Text("Catat Pemasukan") }
+                    OutlinedButton(onClick = onOpenStudents, modifier = Modifier.weight(1f)) {
+                        Text(
+                            "Data Murid"
+                        )
+                    }
                 }
             }
 
@@ -124,12 +167,13 @@ fun DashboardScreen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text("Tunggakan Terbesar", style = MaterialTheme.typography.titleMedium)
-                    Text(
-                        "Lihat semua",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier
-                    )
+                    TextButton(onClick = onOpenTunggakan) {
+                        Text(
+                            "Lihat semua",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
             }
 
@@ -146,10 +190,14 @@ fun DashboardScreen(
                     val item = state.topTunggakan[index]
                     Card(
                         shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 2.dp)
                     ) {
                         Row(
-                            Modifier.fillMaxWidth().padding(14.dp),
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(14.dp),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Column {
@@ -176,15 +224,66 @@ fun DashboardScreen(
 }
 
 @Composable
-private fun SummaryCard(title: String, amount: Long, color: androidx.compose.ui.graphics.Color, modifier: Modifier) {
+private fun SummaryCard(
+    title: String,
+    amount: BigDecimal,
+    color: androidx.compose.ui.graphics.Color,
+    modifier: Modifier
+) {
     Card(
         shape = RoundedCornerShape(12.dp),
         modifier = modifier
     ) {
         Column(Modifier.padding(14.dp)) {
-            Text(title, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                title,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
             Spacer(Modifier.height(4.dp))
             MoneyText(amount = amount, small = true, color = color)
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun DashboardPreview() {
+    TkCashTheme {
+        DashboardContent(
+            state = DashboardUiState(
+                isLoading = false,
+                saldoKas = BigDecimal("5000000"),
+                totalPemasukan = BigDecimal("7000000"),
+                totalPengeluaran = BigDecimal("2000000"),
+                topTunggakan = listOf(
+                    TunggakanItem(
+                        studentFeeId = 1,
+                        studentId = 1,
+                        studentName = "Kamil",
+                        guardianName = "Malik",
+                        feeLabel = "SPP Juli",
+                        totalAmount = BigDecimal("350000"),
+                        paidAmount = BigDecimal("0"),
+                        remaining = BigDecimal("350000")
+                    ),
+                    TunggakanItem(
+                        studentFeeId = 2,
+                        studentId = 2,
+                        studentName = "Ahmad",
+                        guardianName = "Yani",
+                        feeLabel = "Uang Buku",
+                        totalAmount = BigDecimal("150000"),
+                        paidAmount = BigDecimal("50000"),
+                        remaining = BigDecimal("100000")
+                    )
+                )
+            ),
+            onAddPayment = {},
+            onAddExpense = {},
+            onAddBulkFee = {},
+            onOpenStudents = {},
+            onOpenTunggakan = {}
+        )
     }
 }

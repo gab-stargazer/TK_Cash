@@ -6,40 +6,8 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
-val AppTypography = Typography(
-    headlineLarge = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 26.sp,
-        letterSpacing = (-0.3).sp
-    ),
-    titleLarge = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 20.sp
-    ),
-    titleMedium = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Medium,
-        fontSize = 16.sp
-    ),
-    bodyLarge = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Normal,
-        fontSize = 16.sp
-    ),
-    bodyMedium = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Normal,
-        fontSize = 14.sp
-    ),
-    labelSmall = TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontWeight = FontWeight.Medium,
-        fontSize = 12.sp,
-        letterSpacing = 0.4.sp
-    )
-)
+/** Tipografi default aplikasi. */
+val AppTypography = Typography()
 
 /**
  * Signature detail: every Rupiah amount in the app uses tabular figures
@@ -53,4 +21,5 @@ val MoneyTextStyle = TextStyle(
     letterSpacing = 0.sp
 )
 
+/** Varian [MoneyTextStyle] yang lebih kecil untuk nominal ringkas. */
 val MoneyTextStyleSmall = MoneyTextStyle.copy(fontSize = 14.sp, fontWeight = FontWeight.Medium)

@@ -13,3 +13,13 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Release signing — never commit
+keystore.properties
+*.jks
+*.keystore
+*.p12
+
+# Generated / agent artifacts
+.artifacts/
+graphify-out/

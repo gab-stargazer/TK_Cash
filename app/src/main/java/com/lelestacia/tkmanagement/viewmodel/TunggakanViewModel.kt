@@ -3,16 +3,21 @@ package com.lelestacia.tkmanagement.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lelestacia.tkmanagement.data.relation.TunggakanItem
-import com.lelestacia.tkmanagement.data.repository.CashRepository
+import com.lelestacia.tkmanagement.data.repository.FeeRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
-class TunggakanViewModel(private val repository: CashRepository) : ViewModel() {
+/**
+ * ViewModel daftar tunggakan: memuat daftar tunggakan dari [FeeRepository]
+ * dan mengeksposnya sebagai [StateFlow] untuk layar Tunggakan.
+ */
+class TunggakanViewModel(private val repository: FeeRepository) : ViewModel() {
 
     private val _list = MutableStateFlow<List<TunggakanItem>>(emptyList())
+    /** Daftar tunggakan terbaru dari repository. */
     val list: StateFlow<List<TunggakanItem>> = _list.asStateFlow()
 
     init {

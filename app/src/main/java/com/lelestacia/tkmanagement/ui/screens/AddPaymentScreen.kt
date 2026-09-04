@@ -1,51 +1,67 @@
 package com.lelestacia.tkmanagement.ui.screens
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.lelestacia.tkmanagement.data.model.FeeType
+import com.lelestacia.tkmanagement.data.model.StudentFee
 import com.lelestacia.tkmanagement.ui.components.MoneyText
+import com.lelestacia.tkmanagement.ui.components.RupiahVisualTransformation
 import com.lelestacia.tkmanagement.ui.theme.MoneyOut
+import com.lelestacia.tkmanagement.ui.theme.TkCashTheme
+import com.lelestacia.tkmanagement.viewmodel.AddPaymentUiEvent
+import com.lelestacia.tkmanagement.viewmodel.AddPaymentUiState
 import com.lelestacia.tkmanagement.viewmodel.AddPaymentViewModel
+import java.math.BigDecimal
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddPaymentScreen(
-    studentId: Long,
-    studentName: String,
-    preselectedFeeId: Long?,
     viewModel: AddPaymentViewModel,
-    onSaved: () -> Unit
+    onSaved: () -> Unit,
+    onBack: () -> Unit
 ) {
     val state by viewModel.uiState.collectAsState()
 
-    LaunchedEffect(studentId) {
-        viewModel.load(studentId, studentName)
-        if (preselectedFeeId != null) viewModel.selectFee(preselectedFeeId)
-    }
     LaunchedEffect(state.saved) { if (state.saved) onSaved() }
 
+    AddPaymentContent(
+        state = state,
+        onEvent = viewModel::onEvent,
+        onBack = onBack
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@Composable
+private fun AddPaymentContent(
+    state: AddPaymentUiState,
+    onEvent: (AddPaymentUiEvent) -> Unit,
+    onBack: () -> Unit
+) {
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Catat Pemasukan", fontWeight = FontWeight.SemiBold) }) }
+        topBar = {
+            TopAppBar(
+                title = { Text("Catat Pemasukan", fontWeight = FontWeight.SemiBold) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali")
+                    }
+                }
+            )
+        }
     ) { padding ->
         Column(
             Modifier
@@ -65,14 +81,15 @@ fun AddPaymentScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             } else {
-                Row(
+                FlowRow(
                     Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     state.availableFees.forEach { fee ->
-                        AssistChip(
-                            onClick = { viewModel.selectFee(fee.id) },
-                            label = { Text(fee.label) }
+                        FilterChip(
+                            onClick = { onEvent(AddPaymentUiEvent.SelectFee(fee.id)) },
+                            label = { Text(fee.label) },
+                            selected = state.selectedFeeId == fee.id
                         )
                     }
                 }
@@ -85,14 +102,16 @@ fun AddPaymentScreen(
 
             OutlinedTextField(
                 value = state.amountInput,
-                onValueChange = viewModel::onAmountChange,
-                label = { Text("Nominal dibayar hari ini (Rp)") },
+                onValueChange = { onEvent(AddPaymentUiEvent.AmountChange(it)) },
+                label = { Text("Nominal dibayar hari ini") },
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                visualTransformation = RupiahVisualTransformation()
             )
             OutlinedTextField(
                 value = state.note,
-                onValueChange = viewModel::onNoteChange,
+                onValueChange = { onEvent(AddPaymentUiEvent.NoteChange(it)) },
                 label = { Text("Catatan (opsional)") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
@@ -103,12 +122,31 @@ fun AddPaymentScreen(
             }
 
             Button(
-                onClick = viewModel::save,
+                onClick = { onEvent(AddPaymentUiEvent.Save) },
                 enabled = !state.isSaving,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(if (state.isSaving) "Menyimpan..." else "Simpan Pembayaran")
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun AddPaymentPreview() {
+    TkCashTheme {
+        AddPaymentContent(
+            state = AddPaymentUiState(
+                studentName = "Kamil",
+                availableFees = listOf(
+                    StudentFee(id = 1, studentId = 1, feeType = FeeType.SPP, label = "SPP Juli", totalAmount = BigDecimal("350000"))
+                ),
+                selectedFeeId = 1,
+                remainingForSelectedFee = BigDecimal("350000")
+            ),
+            onEvent = {},
+            onBack = {}
+        )
     }
 }

@@ -1,66 +1,106 @@
 package com.lelestacia.tkmanagement.viewmodel
 
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.lelestacia.tkmanagement.data.model.Payment
 import com.lelestacia.tkmanagement.data.model.Student
+import com.lelestacia.tkmanagement.data.model.UniformStatus
 import com.lelestacia.tkmanagement.data.relation.FeeProgress
-import com.lelestacia.tkmanagement.data.repository.CashRepository
+import com.lelestacia.tkmanagement.data.relation.PaymentWithFee
+import com.lelestacia.tkmanagement.data.repository.FeeRepository
+import com.lelestacia.tkmanagement.data.repository.FinanceRepository
+import com.lelestacia.tkmanagement.data.repository.GraduateResult
+import com.lelestacia.tkmanagement.data.repository.StudentRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
+/** State layar detail murid, termasuk tagihan, pembayaran, dan status kelulusan. */
 data class StudentDetailUiState(
     val isLoading: Boolean = true,
     val student: Student? = null,
     val fees: List<FeeProgress> = emptyList(),
-    val payments: List<Payment> = emptyList(),
-    val showFullHistory: Boolean = false
+    val payments: List<PaymentWithFee> = emptyList(),
+    val hasOutstandingFees: Boolean = false,
+    val graduationMessage: String? = null
 )
 
-/** studentId biasanya datang dari NavGraph lewat SavedStateHandle. */
+/** Event UI untuk layar detail murid. */
+sealed interface StudentDetailUiEvent {
+    data object Graduate : StudentDetailUiEvent
+    data object DismissMessage : StudentDetailUiEvent
+    data object MarkUniformTaken : StudentDetailUiEvent
+}
+
+/** ViewModel detail murid: memuat profil, progres tagihan, riwayat pembayaran, dan aksi kelulusan. */
 class StudentDetailViewModel(
-    private val repository: CashRepository,
-    savedStateHandle: SavedStateHandle? = null
+    private val studentRepository: StudentRepository,
+    private val feeRepository: FeeRepository,
+    private val financeRepository: FinanceRepository,
+    private val studentId: Long
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(StudentDetailUiState())
     val uiState: StateFlow<StudentDetailUiState> = _uiState.asStateFlow()
 
-    private var loadedStudentId: Long? = null
-
     init {
-        savedStateHandle?.get<Long>("studentId")?.let { load(it) }
+        loadData()
     }
 
-    fun load(studentId: Long) {
-        if (loadedStudentId == studentId) return
-        loadedStudentId = studentId
+    fun onEvent(event: StudentDetailUiEvent) {
+        when (event) {
+            StudentDetailUiEvent.Graduate -> graduate()
+            StudentDetailUiEvent.DismissMessage -> _uiState.value = _uiState.value.copy(graduationMessage = null)
+            StudentDetailUiEvent.MarkUniformTaken -> markUniformTaken()
+        }
+    }
 
+    private fun graduate() {
         viewModelScope.launch {
-            val student = repository.getStudent(studentId)
-            _uiState.value = _uiState.value.copy(isLoading = false, student = student)
+            when (val result = studentRepository.graduateStudent(studentId)) {
+                is GraduateResult.Success -> _uiState.value = _uiState.value.copy(
+                    graduationMessage = "${result.graduatedCount} murid diluluskan."
+                )
+                is GraduateResult.Skipped -> _uiState.value = _uiState.value.copy(
+                    graduationMessage = "Tidak bisa diluluskan: masih ada tagihan yang belum lunas."
+                )
+            }
+        }
+    }
+
+    private fun markUniformTaken() {
+        val current = _uiState.value.student ?: return
+        // One-way irreversible transition: only BELUM_DIAMBIL -> SUDAH_DIAMBIL.
+        if (current.uniformStatus == UniformStatus.SUDAH_DIAMBIL) return
+        viewModelScope.launch {
+            studentRepository.updateStudent(current.copy(uniformStatus = UniformStatus.SUDAH_DIAMBIL))
+        }
+    }
+
+    private fun loadData() {
+        viewModelScope.launch {
+            studentRepository.readStudentDataById(studentId).collectLatest { student ->
+                _uiState.value = _uiState.value.copy(isLoading = false, student = student)
+            }
         }
 
-        // Live: recomposes automatically whenever student_fees or payments
-        // change in Room — no manual reload after recording a payment.
         viewModelScope.launch {
-            repository.getFeeProgressForStudent(studentId).collectLatest { fees ->
+            feeRepository.readFeeProgressForStudentById(studentId).collectLatest { fees ->
                 _uiState.value = _uiState.value.copy(fees = fees)
             }
         }
+
         viewModelScope.launch {
-            repository.getPaymentsForStudent(studentId).collectLatest { payments ->
+            financeRepository.readPaymentsWithFeeForStudentById(studentId).collectLatest { payments ->
                 _uiState.value = _uiState.value.copy(payments = payments)
             }
         }
-    }
 
-    /** Tombol "Lihat Riwayat Lengkap". */
-    fun toggleFullHistory() {
-        _uiState.value = _uiState.value.copy(showFullHistory = !_uiState.value.showFullHistory)
+        viewModelScope.launch {
+            studentRepository.hasOutstandingFees(studentId).collectLatest { has ->
+                _uiState.value = _uiState.value.copy(hasOutstandingFees = has)
+            }
+        }
     }
 }

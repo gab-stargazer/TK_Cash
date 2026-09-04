@@ -8,13 +8,49 @@ import com.lelestacia.tkmanagement.data.model.StudentFee
 import com.lelestacia.tkmanagement.data.relation.TunggakanItem
 import kotlinx.coroutines.flow.Flow
 
+/** DAO penyimpanan tagihan murid dan perhitungan sisa pembayaran. */
 @Dao
 interface FeeDao {
+    /** Menyimpan satu tagihan murid dan mengembalikan ID barunya. */
     @Insert
     suspend fun insert(fee: StudentFee): Long
 
-    @Query("SELECT * FROM student_fees WHERE studentId = :studentId ORDER BY createdAt DESC")
+    @Insert
+    suspend fun insertBulk(fees: List<StudentFee>)
+
+    @Query("SELECT * FROM student_fees WHERE student_id = :studentId ORDER BY created_at DESC")
     fun getFeesForStudent(studentId: Long): Flow<List<StudentFee>>
+
+    /**
+     * True kalau murid masih punya tagihan yang sisa > 0.
+     * Dipakai untuk mengunci aksi "Luluskan" sampai semua tagihan lunas.
+     */
+    @Query(
+        """
+        SELECT EXISTS(
+            SELECT 1 FROM student_fees sf
+            LEFT JOIN payments p ON p.student_fee_id = sf.id
+            WHERE sf.student_id = :studentId
+            GROUP BY sf.id
+            HAVING sf.total_amount - COALESCE(SUM(p.amount), 0) > 0
+        )
+        """
+    )
+    fun hasOutstandingFees(studentId: Long): Flow<Boolean>
+
+    /**
+     * Daftar student_id yang masih punya tunggakan. Dipakai untuk memfilter
+     * kelulusan massal: hanya murid yang SEMUA tagihannya sudah lunas yang boleh diluluskan.
+     */
+    @Query(
+        """
+        SELECT sf.student_id FROM student_fees sf
+        LEFT JOIN payments p ON p.student_fee_id = sf.id
+        GROUP BY sf.id
+        HAVING sf.total_amount - COALESCE(SUM(p.amount), 0) > 0
+        """
+    )
+    suspend fun getStudentIdsWithOutstandingFees(): List<Long>
 
     /**
      * Progres tagihan untuk satu murid, live: Room melacak tabel student_fees
@@ -25,17 +61,17 @@ interface FeeDao {
         """
         SELECT
             sf.id AS studentFeeId,
-            sf.studentId AS studentId,
-            sf.feeType AS feeType,
+            sf.student_id AS studentId,
+            sf.fee_type AS feeType,
             sf.label AS label,
-            sf.totalAmount AS totalAmount,
-            COALESCE(SUM(p.amount), 0) AS paidAmount,
-            sf.totalAmount - COALESCE(SUM(p.amount), 0) AS remaining
+            CAST(sf.total_amount AS TEXT) AS totalAmount,
+            CAST(COALESCE(SUM(p.amount), '0') AS TEXT) AS paidAmount,
+            CAST(sf.total_amount - COALESCE(SUM(p.amount), 0) AS TEXT) AS remaining
         FROM student_fees sf
-        LEFT JOIN payments p ON p.studentFeeId = sf.id
-        WHERE sf.studentId = :studentId
+        LEFT JOIN payments p ON p.student_fee_id = sf.id
+        WHERE sf.student_id = :studentId
         GROUP BY sf.id
-        ORDER BY sf.createdAt DESC
+        ORDER BY sf.created_at DESC
         """
     )
     fun getFeeProgressForStudent(studentId: Long): Flow<List<FeeProgress>>
@@ -48,15 +84,16 @@ interface FeeDao {
         """
         SELECT
             sf.id AS studentFeeId,
-            sf.studentId AS studentId,
+            sf.student_id AS studentId,
+            s.guardian_name AS guardianName,
             s.name AS studentName,
             sf.label AS feeLabel,
-            sf.totalAmount AS totalAmount,
-            COALESCE(SUM(p.amount), 0) AS paidAmount,
-            sf.totalAmount - COALESCE(SUM(p.amount), 0) AS remaining
+            CAST(sf.total_amount AS TEXT) AS totalAmount,
+            CAST(COALESCE(SUM(p.amount), '0') AS TEXT) AS paidAmount,
+            CAST(sf.total_amount - COALESCE(SUM(p.amount), 0) AS TEXT) AS remaining
         FROM student_fees sf
-        INNER JOIN students s ON s.id = sf.studentId
-        LEFT JOIN payments p ON p.studentFeeId = sf.id
+        INNER JOIN students s ON s.id = sf.student_id
+        LEFT JOIN payments p ON p.student_fee_id = sf.id
         GROUP BY sf.id
         HAVING remaining > 0
         ORDER BY remaining DESC
@@ -69,15 +106,16 @@ interface FeeDao {
         """
         SELECT
             sf.id AS studentFeeId,
-            sf.studentId AS studentId,
+            sf.student_id AS studentId,
             s.name AS studentName,
+            s.guardian_name AS guardianName,
             sf.label AS feeLabel,
-            sf.totalAmount AS totalAmount,
-            COALESCE(SUM(p.amount), 0) AS paidAmount,
-            sf.totalAmount - COALESCE(SUM(p.amount), 0) AS remaining
+            CAST(sf.total_amount AS TEXT) AS totalAmount,
+            CAST(COALESCE(SUM(p.amount), '0') AS TEXT) AS paidAmount,
+            CAST(sf.total_amount - COALESCE(SUM(p.amount), 0) AS TEXT) AS remaining
         FROM student_fees sf
-        INNER JOIN students s ON s.id = sf.studentId
-        LEFT JOIN payments p ON p.studentFeeId = sf.id
+        INNER JOIN students s ON s.id = sf.student_id
+        LEFT JOIN payments p ON p.student_fee_id = sf.id
         WHERE sf.id = :studentFeeId
         GROUP BY sf.id
         """

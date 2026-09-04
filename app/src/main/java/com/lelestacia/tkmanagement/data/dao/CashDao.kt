@@ -2,6 +2,7 @@ package com.lelestacia.tkmanagement.data.dao
 
 import androidx.room.Dao
 import androidx.room.Query
+import java.math.BigDecimal
 
 /**
  * Saldo kas = total semua pemasukan (payments) - total semua pengeluaran (expenses).
@@ -12,19 +13,23 @@ import androidx.room.Query
 interface CashDao {
     @Query(
         """
-        SELECT
+        SELECT CAST(
             (SELECT COALESCE(SUM(amount), 0) FROM payments) -
             (SELECT COALESCE(SUM(amount), 0) FROM expenses)
+        AS TEXT)
         """
     )
-    suspend fun getCurrentBalance(): Long
+    /** Saldo kas saat ini = total pemasukan dikurangi total pengeluaran. */
+    suspend fun getCurrentBalance(): BigDecimal
 
     @Query(
         """
-        SELECT
-            (SELECT COALESCE(SUM(amount), 0) FROM payments WHERE paymentDate BETWEEN :start AND :end) -
-            (SELECT COALESCE(SUM(amount), 0) FROM expenses WHERE expenseDate BETWEEN :start AND :end)
+        SELECT CAST(
+            (SELECT COALESCE(SUM(amount), 0) FROM payments WHERE payment_date BETWEEN :start AND :end) -
+            (SELECT COALESCE(SUM(amount), 0) FROM expenses WHERE expense_date BETWEEN :start AND :end)
+        AS TEXT)
         """
     )
-    suspend fun getNetCashBetween(start: Long, end: Long): Long
+    /** Arus kas bersih (pemasukan - pengeluaran) pada rentang waktu (epoch ms). */
+    suspend fun getNetCashBetween(start: Long, end: Long): BigDecimal
 }
